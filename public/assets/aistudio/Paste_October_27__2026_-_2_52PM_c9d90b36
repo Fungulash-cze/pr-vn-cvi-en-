@@ -1,0 +1,363 @@
+# ÚKOL A ROLE
+Vytvoř kompletní, jednosouborovou webovou aplikaci (`index.html` s vloženým CSS a JavaScriptem) pro systematické procvičování a opakování českého zdravotnického práva od základů.
+
+# STRIKTNÍ PRAVIDLO PRO OBSAH
+1. Veškeré kartičky, drily a texty pro modul „Právní rentgen“ vezmi VÝHRADNĚ z datové části níže a vlož je všechny do JavaScriptového pole v kódu (žádné položky nevynechávej ani nezkracuj pomocí komentářů typu `// další kartičky`).
+2. NIKDY neměň čísla paragrafů, lhůty ani spisové značky judikátů.
+
+# VIZUÁLNÍ STYL A UX (ŠVÝCARSKÝ EDITORIÁLNÍ / ARCHIVNÍ DESIGN)
+Aplikace nesmí vypadat jako generická AI šablona (žádné fialové gradienty, žádné emotikony v nadpisech, žádné generické stíny).
+- **Estetika:** Moderní švýcarský editoriální styl kombinovaný s kartotékou a klinickou přesností (inspirováno studijními kartotékami a tištěnými komentáři zákonů).
+- **Barevná paleta:**
+  - Pozadí aplikace: teplý archivní papír (`#F5F3EE`)
+  - Karty: čistá slonovina (`#FCFBF9`) s ostrým 1.5px rámečkem v barvě hlubokého inkoustu (`#161615`) a tvrdým posunutým stínem (`4px 4px 0px #161615`).
+  - Primární text: `#161615`
+  - Akcentní barvy štítků podle právních předpisů:
+    - Úmluva a LZPS: Královská modř (`#1D4ED8`)
+    - Zákon o zdravotních službách (ZZS): Klinická zelená (`#0F766E`)
+    - Občanský zákoník (OZ): Cihlová rumělka (`#C2410C`)
+    - Trestní právo a proces (TZ / ZŘS): Vínová (`#9F1239`)
+- **Typografie (Google Fonts):**
+  - Nadpisy a otázky na kartičkách: výrazné patkové písmo (`Newsreader` nebo `Instrument Serif`).
+  - Běžný text a UI: čisté bezpatkové písmo (`Plus Jakarta Sans`).
+  - Citace paragrafů, lhůty a spisové značky: neproporcionální písmo (`JetBrains Mono`).
+- **Ovládání klávesnicí (zobraz nápovědu kláves v patičce):**
+  - `Mezerník` = otočit kartičku
+  - `H` = zobrazit nápovědu (před otočením)
+  - `1` = Neumím (Znovu), `2` = Váhal jsem (Těžké), `3` = Umím (Dobré)
+  - `Šipky doleva/doprava` = přechod mezi kartičkami
+
+# ARCHITEKTURA APLIKACE (3 TRÉNINKOVÉ REŽIMY + PERSISTENCE)
+Ukládej stav naučených kartiček a skóre do `localStorage` (s možností resetu pokroku).
+
+## Režim 1: Kartotéka (Chytré kartičky s aktivním vybavením)
+- Filtrování podle 7 tematických okruhů (nebo filtr „Jen ty, které neumím / k opakování“).
+- **Líc kartičky:** Číslo a okruh, hlavní otázka/situace, tlačítko „Zobrazit vodítko (H)“, které odhalí, na jaký zákon či princip se zaměřit.
+- **Rub kartičky (po otočení):**
+  1. **Přímá odpověď** (výrazně oddělená).
+  2. **Právní opora** (v monospaced boxu).
+  3. **Praktický chyták / Judikatura** (ve zvýrazněném varovném boxu).
+- Ve spodní části rubu 3 tlačítka sebehodnocení: `[1] Znovu (červená)`, `[2] S dopomocí (oranžová)`, `[3] Zvládnuto (zelená)`.
+
+## Režim 2: Bleskový dril (Lhůty, věkové hranice a Semafor mlčenlivosti)
+Rozděleno na dvě podzáložky:
+- **Podzáložka A – Číselná palba (Lhůty a věk):** Zobrazí se situace a uživatel musí ze 4 možností okamžitě vybrat přesnou zákonnou lhůtu nebo věkovou hranici. Okamžité vyhodnocení s citací paragrafu.
+- **Podzáložka B – Semafor mlčenlivosti a souhlasů:** Krátký popis situace (např. kdo žádá informaci nebo jaký zákrok se provádí) a 3 rychlá tlačítka rozhodnutí.
+
+## Režim 3: Právní rentgen (Odhal vady v dokumentu – Didaktický speciál)
+- Na obrazovce se zobrazí realisticky vypadající klinicko-právní dokument (např. *Záznam o dříve vysloveném přání*, *Negativní reverz*, *Rozhodnutí o zadržení informace*, *Zápis o nedobrovolné hospitalizaci*).
+- Dokument se skládá z jednotlivých klikacích vět/odstavců.
+- Uživatel má za úkol najít a označit všechny právně vadné věty (v každém dokumentu je přesně stanovený počet chyb).
+- Po kliknutí na větu se okamžitě ukáže, zda jde o právní chybu, nebo zda je věta v souladu se zákonem, a zobrazí se detailní právní rozbor.
+
+---
+
+# OBSAHOVÁ DATABÁZE (VLOŽ KOMPLETNĚ DO KÓDU APLIKACE)
+
+## A. DATABÁZE KARTIČEK (REŽIM 1)
+
+### Okruh 1: Ústavní základy, Úmluva o biomedicíně a základní pojmy ZZS
+
+**[Karta 1.1]**
+- **Otázka:** Jaký je právní vztah mezi Úmluvou o lidských právech a biomedicíně (č. 96/2001 Sb. m. s.) a českými zákony (např. ZZS a OZ)?
+- **Vodítko:** Čl. 10 Ústavy ČR.
+- **Odpověď:** Úmluva je vyhlášenou mezinárodní smlouvou o lidských právech, která je součástí českého právního řádu a má **aplikační přednost před zákonem**. Stanoví-li český zákon něco v rozporu s Úmluvou, použije se Úmluva (pokud zákon neposkytuje pacientovi širší míru ochrany dle čl. 27 Úmluvy).
+- **Právní opora:** Čl. 10 Ústavy ČR; čl. 27 Úmluvy o lidských právech a biomedicíně (č. 96/2001 Sb. m. s.).
+- **Chyták / Judikatura:** Aplikační přednost neznamená, že běžný soud může český zákon zrušit – pouze jej v konkrétním případě nepoužije a aplikuje přímo normu Úmluvy, případně věc předloží Ústavnímu soudu.
+
+**[Karta 1.2]**
+- **Otázka:** Jaké je základní ústavní a mezinárodněprávní pravidlo pro jakýkoliv lékařský zákrok a do kterého základního práva dle Listiny (LZPS) zasahuje zákrok provedený bez souhlasu?
+- **Vodítko:** Čl. 5 Úmluvy o biomedicíně a čl. 7 LZPS.
+- **Odpověď:** Jakýkoliv zákrok v oblasti péče o zdraví lze provést pouze za podmínky, že k němu dotčená osoba poskytla **svobodný a informovaný souhlas**. Zákrok provedený bez platného souhlasu (mimo zákonné výjimky) je přímým zásahem do **nedotknutelnosti osoby a jejího soukromí**.
+- **Právní opora:** Čl. 5 Úmluvy o biomedicíně; čl. 7 odst. 1 Listiny základních práv a svobod (č. 2/1993 Sb.).
+- **Chyták / Judikatura:** Zásah do čl. 7 odst. 1 LZPS nastává i tehdy, když byl zákrok bez souhlasu proveden medicínsky zcela bezchybně (*lege artis*) a pacientovi objektivně prospěl!
+
+**[Karta 1.3]**
+- **Otázka:** Jaký je zákonný rozdíl mezi „neodkladnou péčí“ a „akutní péčí“ podle zákona o zdravotních službách (ZZS)?
+- **Vodítko:** § 5 odst. 1 písm. a) a b) ZZS – sleduj bezprostřednost ohrožení a možnost ošetření bez souhlasu.
+- **Odpověď:** **Neodkladná péče** odvrací náhlé stavy, které *bezprostředně ohrožují život*, mohly by vést k náhlému úmrtí, vážně ohrozit zdraví nebo působí náhlou a intenzivní bolest. **Akutní péče** odvrací či snižuje riziko vážného zhoršení stavu, aby byly včas zjištěny skutečnosti pro léčbu nebo aby pacient neohrozil sebe či okolí.
+- **Právní opora:** § 5 odst. 1 písm. a) a b) zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** Zásadní praktický rozdíl: Bez souhlasu zletilého svéprávného pacienta lze poskytnout **pouze neodkladnou péči** (§ 38 odst. 3 ZZS), nikoliv péči akutní! Akutní péči bez souhlasu lze poskytnout jen u nezletilého nebo osoby s omezenou svéprávností, nelze-li souhlas zástupce získat bez zbytečného odkladu (§ 38 odst. 5 ZZS).
+
+**[Karta 1.4]**
+- **Otázka:** Co je to „nezbytná péče“ podle § 5 odst. 1 písm. c) ZZS?
+- **Vodítko:** Pozor na záměnu s neodkladnou péčí – týká se specifické skupiny pacientů.
+- **Odpověď:** Nezbytná péče je péče, kterou z lékařského hlediska vyžaduje zdravotní stav pacienta, který je **zahraničním pojištěncem**, s přihlédnutím k povaze dávek a očekávané délce pobytu na území ČR (aby nemusel předčasně ukončit pobyt).
+- **Právní opora:** § 5 odst. 1 písm. c) zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** V běžné řeči se slovo „nezbytná“ plete s „neodkladnou“. V ZZS má však pojem *nezbytná péče* úzký technický význam pro přeshraniční čerpání zdravotní péče cizinci.
+
+**[Karta 1.5]**
+- **Otázka:** Jak zákon o zdravotních službách definuje „náležitou odbornou úroveň“ (postup *lege artis*) a jaké 4 prvky tato definice obsahuje?
+- **Vodítko:** § 4 odst. 5 ZZS.
+- **Odpověď:** Poskytování zdravotních služeb: 1. **podle pravidel vědy a uznávaných medicínských postupů**, 2. **při respektování individuality pacienta**, 3. **s ohledem na konkrétní podmínky**, 4. **s ohledem na objektivní možnosti**.
+- **Právní opora:** § 4 odst. 5 zákona č. 372/2011 Sb. (ZZS); v soukromém právu § 2643 odst. 1 OZ (péče řádného odborníka).
+- **Chyták / Judikatura:** Doporučené postupy (guidelines) odborných společností nejsou obecně závazným právním předpisem. Lékař se od nich smí (a někdy musí) odchýlit kvůli *individualitě pacienta*, musí však odklon odborně zdůvodnit v dokumentaci. Zda šlo o postup *lege artis*, je v soudním sporu **právní otázkou pro soud**, nikoliv pro znalce.
+
+**[Karta 1.6]**
+- **Otázka:** Za jakých podmínek lze poskytovat telemedicínské zdravotní služby podle § 11c ZZS a prováděcí vyhlášky?
+- **Vodítko:** Novela č. 240/2024 Sb. a vyhláška č. 30/2025 Sb.
+- **Odpověď:** Telemedicína není samostatným druhem péče, ale způsobem poskytování zdravotních služeb na dálku. Může ji poskytovat **jen poskytovatel s oprávněním k poskytování zdravotních služeb** při splnění technických požadavků: **šifrovaný komunikační kanál**, **ověření identity pacienta i zdravotníka** a souhlas pacienta v případě záznamu komunikace.
+- **Právní opora:** § 11 odst. 5 a § 11c zákona č. 372/2011 Sb. (ZZS); vyhláška č. 30/2025 Sb., o telemedicínských zdravotních službách.
+- **Chyták / Judikatura:** Zdravotní služby spočívající v telemedicíně (kde je přítomen jen zdravotník bez fyzické přítomnosti pacienta) lze poskytovat i **mimo zdravotnické zařízení** (např. z home office lékaře), pokud je zajištěna ochrana dat a soukromí (§ 11 odst. 5 ZZS).
+
+---
+
+### Okruh 2: Informovaný souhlas, poučovací povinnost a negativní reverz
+
+**[Karta 2.1]**
+- **Otázka:** Kdy musí mít informovaný souhlas pacienta podle zákona o zdravotních službách a občanského zákoníku povinně PÍSEMNOU formu?
+- **Vodítko:** § 34 odst. 2 ZZS a § 96 OZ (3 situace v ZZS + obecné pravidlo v OZ).
+- **Odpověď:** Písemná forma souhlasu se vyžaduje: 1. **vždy u souhlasu s hospitalizací**, 2. **určí-li tak poskytovatel** s ohledem na charakter služeb, 3. **stanoví-li tak jiný právní předpis** – zejména zákon o specifických zdravotních službách (sterilizace, kastrace, IVF) a **§ 96 OZ** (zásah, který zanechá **trvalé, neodvratitelné a vážné následky** nebo je spojen s **vážným nebezpečím pro život nebo zdraví**).
+- **Právní opora:** § 34 odst. 2 zákona č. 372/2011 Sb. (ZZS); § 96 zákona č. 89/2012 Sb. (OZ).
+- **Chyták / Judikatura:** Nedodržení písemné formy tam, kde ji vyžaduje pouze vnitřní předpis poskytovatele, samo o sobě nezpůsobuje neplatnost souhlasu, pokud poskytovatel jinak (např. svědecky) prokáže, že pacient byl řádně poučen a souhlas udělil. Důkazní břemeno o poučení však nese poskytovatel!
+
+**[Karta 2.2]**
+- **Otázka:** Jak funguje pravidlo nepřímé úměry u poučovací povinnosti lékaře ohledně rizik zákroku?
+- **Vodítko:** Rozdíl mezi vitální indikací a estetickým/elektivním zákrokem.
+- **Odpověď:** Čím méně je zákrok ze zdravotního hlediska naléhavý či nezbytný (typicky kosmetické, estetické nebo čistě plánované elektivní výkony), tím **širší, podrobnější a přísnější** je poučovací povinnost lékaře, a to i ohledně statisticky velmi vzácných rizik, pokud by měla závažné následky.
+- **Právní opora:** § 31 odst. 2 ZZS; § 94 a § 2638 OZ; judikatura NS a ÚS (např. sp. zn. 25 Cdo 4210/2014).
+- **Chyták / Judikatura:** Učebnicový chyták: Lékař nemusí vyjmenovávat každou banální a snadno řešitelnou komplikaci, ale musí vždy upozornit na **typická rizika** daného výkonu a na ta **vzácná rizika**, která by v případě realizace znamenala těžkou újmu (ochrnutí, slepota, ztráta hlasu, smrt).
+
+**[Karta 2.3]**
+- **Otázka:** Za jakých podmínek může lékař zadržet informaci o nepříznivé diagnóze nebo prognóze (tzv. terapeutické privilegium / milosrdná lež) a v čem je občanský zákoník přísnější než ZZS?
+- **Vodítko:** § 32 odst. 2 ZZS vs. § 2640 odst. 1 věta druhá OZ.
+- **Odpověď:** Informaci lze zadržet v nezbytném rozsahu a po nezbytnou dobu, lze-li důvodně předpokládat, že by její podání způsobilo pacientovi **závažnou újmu na zdraví**. Občanský zákoník však stanoví vyvratitelnou domněnku: **má se za to, že toto právo poskytovatel nemá, nepotvrdí-li mu zjevnost a vážnost nebezpečí jiná osoba poskytující péči o zdraví v daném oboru (druhý odborník).**
+- **Právní opora:** § 32 odst. 2 a 3 zákona č. 372/2011 Sb. (ZZS); § 2640 zákona č. 89/2012 Sb. (OZ).
+- **Chyták / Judikatura:** Informaci nelze zadržet nikdy, pokud: a) je to jediný způsob, jak pacientovi umožnit včasnou léčbu či prevenci, b) stav pacienta představuje riziko pro okolí, nebo c) **pacient výslovně žádá přesnou a pravdivou informaci** (§ 2640 odst. 2 OZ).
+
+**[Karta 2.4]**
+- **Otázka:** Kdy se pacient NEMŮŽE vzdát podání informace o svém zdravotním stavu?
+- **Vodítko:** § 32 odst. 1 ZZS – ochrana třetích osob.
+- **Odpověď:** Pacient se nemůže vzdát informace (a lékař mu ji musí sdělit i proti jeho vůli), pokud jde o informaci, že pacient **trpí infekční nemocí nebo jinou nemocí, v souvislosti s níž může ohrozit zdraví nebo život jiných osob**.
+- **Právní opora:** § 32 odst. 1 věta poslední zákona č. 372/2011 Sb. (ZZS); § 2641 OZ.
+- **Chyták / Judikatura:** Záznam o vzdání se informace musí být součástí zdravotnické dokumentace a podepisuje jej jak zdravotnický pracovník, tak pacient (§ 32 odst. 1 ZZS).
+
+**[Karta 2.5]**
+- **Otázka:** Co musí udělat lékař, pokud plně svéprávný pacient po řádném poučení odmítá život zachraňující výkon, a co když tento pacient odmítne podepsat negativní reverz?
+- **Vodítko:** § 34 odst. 3 až 5 ZZS a nález ÚS sp. zn. I. ÚS 2078/16.
+- **Odpověď:** Lékař **musí rozhodnutí plně svéprávného pacienta respektovat** a výkon nesmí provést násilím. Odmítá-li pacient písemný reverz podepsat (nebo mu v tom brání zdravotní stav), zaznamená to zdravotnický pracovník do dokumentace a záznam podepíše on a **alespoň jeden svědek**.
+- **Právní opora:** § 34 odst. 3–5 ZZS; § 2642 OZ; nález Ústavního soudu sp. zn. I. ÚS 2078/16.
+- **Chyták / Judikatura:** Podle nálezu I. ÚS 2078/16 lékař, který pacienta řádně poučil o následcích odmítnutí péče (včetně smrti) a respektoval jeho svobodný nesouhlas, **nenese za smrt či poškození zdraví pacienta ani trestní, ani civilní odpovědnost**.
+
+---
+
+### Okruh 3: Dříve vyslovené přání (DVP), nezletilí a osoby s omezenou svéprávností
+
+**[Karta 3.1]**
+- **Otázka:** Jaké 3 formální náležitosti musí splňovat dříve vyslovené přání (DVP) sepsané mimo zdravotnické zařízení, aby bylo platné a závazné?
+- **Vodítko:** § 36 odst. 2 a 3 ZZS.
+- **Odpověď:** 1. **Písemná forma**, 2. **úředně ověřený podpis** pacienta, 3. součástí musí být **písemné poučení o důsledcích rozhodnutí provedené lékařem** v oboru všeobecné praktické lékařství (u něhož je pacient registrován) nebo jiným ošetřujícím lékařem v oboru zdravotní péče, s níž DVP souvisí.
+- **Právní opora:** § 36 odst. 2 a 3 zákona č. 372/2011 Sb. (ZZS); § 98 OZ.
+- **Chyták / Judikatura:** Výjimka z úředně ověřeného podpisu (§ 36 odst. 4 ZZS): Pacient může DVP učinit i přímo při přijetí do péče nebo během hospitalizace záznamem do zdravotnické dokumentace – pak se úřední ověření nevyžaduje, ale záznam musí podepsat **pacient, zdravotnický pracovník a svědek**.
+
+**[Karta 3.2]**
+- **Otázka:** Vyjmenuj všech 5 zákonných případů, kdy dříve vyslovené přání (DVP) NELZE respektovat nebo uplatnit.
+- **Vodítko:** § 36 odst. 5 a 6 ZZS.
+- **Odpověď:** DVP nelze respektovat/uplatnit, pokud:
+  1. Od jeho vyslovení došlo k takovému **medicínskému vývoji**, že lze důvodně předpokládat, že by pacient souhlas vyslovil.
+  2. Nabádá k postupům vedoucím k **aktivnímu způsobení smrti** (aktivní eutanazie).
+  3. Jeho splnění by mohlo **ohrozit jiné osoby**.
+  4. Zdravotní výkony byly započaty v době, kdy poskytovatel **neměl DVP k dispozici**, a jejich přerušení by vedlo k aktivnímu způsobení smrti.
+  5. Jde o **nezletilého pacienta nebo pacienta s omezenou svéprávností**.
+- **Právní opora:** § 36 odst. 5 a 6 zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** Odpojení od přístrojů či nezahájení marné a neúčelné léčby (*withholding / withdrawing of futile treatment*) na základě DVP nebo medicínské indikace se nepovažuje za aktivní způsobení smrti, ale za přirozený průběh umírání.
+
+**[Karta 3.3]**
+- **Otázka:** Kdy může nezletilý pacient udělit souhlas se zdravotní službou sám a jakou roli hraje věková hranice 14 let při jeho nesouhlasu se zákrokem?
+- **Vodítko:** § 35 odst. 1 ZZS vs. § 95 a § 100 odst. 1 OZ.
+- **Odpověď:** Nezletilému lze poskytnout zdravotní služby na základě jeho vlastního souhlasu, je-li provedení úkonu **přiměřené jeho rozumové a volní vyspělosti odpovídající jeho věku** (§ 35 odst. 1 ZZS, § 95 OZ). Pokud však nezletilý **dovršil 14 let** a zákroku do integrity **vážně odporuje**, ačkoliv zákonný zástupce souhlasí, **nelze zákrok provést bez souhlasu soudu** (§ 100 odst. 1 OZ).
+- **Právní opora:** § 35 odst. 1 ZZS; § 95 a § 100 odst. 1 zákona č. 89/2012 Sb. (OZ).
+- **Chyták / Judikatura:** Pravidlo v § 100 odst. 1 OZ (zákaz provést zákrok bez souhlasu soudu při vážném odporu) platí kromě nezletilých nad 14 let také pro **zletilé osoby s omezenou svéprávností**! Netýká se však stavů bezprostředního ohrožení života (§ 38 odst. 4 ZZS).
+
+**[Karta 3.4]**
+- **Otázka:** Rodiče 5letého dítěte z náboženských důvodů odmítají život zachraňující transfuzi při akutním krvácení po úrazu. Kdo rozhodne o podání krve? A kdo rozhodne, jde-li o plánovanou (odkladnou) operaci?
+- **Vodítko:** § 38 odst. 4 ZZS vs. předběžné opatření / nahrazení souhlasu soudem.
+- **Odpověď:** Jde-li o služby **nezbytné k záchraně života nebo zamezení vážného poškození zdraví** a rodiče souhlas odpírají, rozhodne o poskytnutí služeb přímo **ošetřující zdravotnický pracovník** (§ 38 odst. 4 ZZS). Jde-li o odkladný (plánovaný) zákrok, lékař sám rozhodnout nesmí a musí iniciovat **rozhodnutí soudu** (zpravidla přes OSPOD).
+- **Právní opora:** § 38 odst. 4 zákona č. 372/2011 Sb. (ZZS); § 100 odst. 2 a § 877 OZ; nález ÚS sp. zn. III. ÚS 459/03.
+- **Chyták / Judikatura:** U § 38 odst. 5 ZZS (poskytnutí *akutní* péče dítěti bez souhlasu rodičů) je podmínkou, že souhlas rodičů *nelze získat bez zbytečného odkladu* (např. jsou nedostupní). Pokud jsou rodiče na místě a *aktivně nesouhlasí*, může lékař jejich nesouhlas prolomit sám jen u **záchrany života nebo zamezení vážného poškození zdraví** dle § 38 odst. 4 ZZS!
+
+---
+
+### Okruh 4: Nedobrovolná hospitalizace (detence) a omezovací prostředky
+
+**[Karta 4.1]**
+- **Otázka:** Ve kterých 4 případech lze pacienta hospitalizovat bez jeho souhlasu podle § 38 odst. 1 ZZS?
+- **Vodítko:** Ochranné léčení, infekce, duševní porucha/intoxikace s ohrožením, neodkladná péče.
+- **Odpověď:**
+  1. Pravomocným rozhodnutím soudu uložené **ochranné léčení** nebo nařízené vyšetření duševního stavu.
+  2. Nařízená **izolace nebo karanténa** dle zákona o ochraně veřejného zdraví.
+  3. Pacient **bezprostředně a závažným způsobem ohrožuje sebe nebo své okolí** a jeví známky duševní poruchy (nebo jí trpí) nebo je pod vlivem návykové látky, nelze-li hrozbu odvrátit jinak.
+  4. Stav vyžaduje **neodkladnou péči** a zároveň neumožňuje, aby pacient vyslovil souhlas.
+- **Právní opora:** § 38 odst. 1 zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** Samotná přítomnost duševní poruchy (např. schizofrenie, demence) nikdy nestačí k nedobrovolné hospitalizaci! Musí být kumulativně splněno **bezprostřední a závažné ohrožení sebe nebo okolí** a princip subsidiarity (nelze odvrátit mírněji).
+
+**[Karta 4.2]**
+- **Otázka:** Pacient je nedobrovolně hospitalizován na psychiatrii podle § 38 odst. 1 písm. c) ZZS. Jakou péči mu lze během této hospitalizace poskytovat BEZ jeho souhlasu?
+- **Vodítko:** § 38 odst. 3 ZZS – zásadní rozdíl mezi držením v ústavu a léčebnými výkony.
+- **Odpověď:** Bez souhlasu pacienta lze během nedobrovolné hospitalizace poskytovat **pouze neodkladnou péči**! Samotné převzetí do ústavu bez souhlasu neopravňuje lékaře k provádění běžných (neakutních) diagnostických či léčebných výkonů proti vůli pacienta.
+- **Právní opora:** § 38 odst. 3 zákona č. 372/2011 Sb. (ZZS); § 104 a násl. OZ; judikatura ESLP a ÚS.
+- **Chyták / Judikatura:** Toto je jeden z nejčastějších omylů v klinické praxi. Nedobrovolná hospitalizace omezuje *svobodu pohybu* (čl. 8 LZPS), nikoliv automaticky *tělesnou integritu* (čl. 7 LZPS) pro veškerou další léčbu.
+
+**[Karta 4.3]**
+- **Otázka:** Popiš přesnou časovou osu detenčního řízení od převzetí pacienta bez souhlasu (4 klíčové lhůty).
+- **Vodítko:** § 40 ZZS a § 75–82 zákona č. 292/2013 Sb., o zvláštních řízeních soudních (z. ř. s.).
+- **Odpověď:**
+  1. **Do 24 hodin:** Poskytovatel musí oznámit soudu převzetí (nebo dodatečné omezení volného pohybu), pokud pacient v této lhůtě neudělil písemný souhlas.
+  2. **Do 7 dnů od převzetí:** Soud rozhodne **usnesením** o přípustnosti převzetí (1. fáze; usnesení se doručuje do 24 h od vydání).
+  3. **Do 3 měsíců od výroku o přípustnosti převzetí:** Soud po jednání a posudku nezávislého znalce rozhodne **rozsudkem** o přípustnosti dalšího držení (2. fáze).
+  4. **Nejdéle 1 rok:** Maximální doba, na kterou soud může další držení povolit (poté je nutné nové rozhodnutí).
+- **Právní opora:** Čl. 8 odst. 6 LZPS; § 40 ZZS; § 75, § 77, § 79, § 80 a § 82 zákona č. 292/2013 Sb. (z. ř. s.).
+- **Chyták / Judikatura:** Znalcem ve 2. fázi detenčního řízení **nesmí být lékař, který pracuje ve stejném zdravotnickém zařízení**, v němž je pacient držen (§ 80 odst. 2 z. ř. s.).
+
+**[Karta 4.4]**
+- **Otázka:** Kdo může indikovat použití omezovacích prostředků (např. kurtů nebo psychofarmak podaných parenterálně k omezení pohybu) a jaká platí oznamovací povinnost vůči soudu?
+- **Vodítko:** § 39 odst. 3 a § 40 odst. 1 písm. b) ZZS.
+- **Odpověď:** Použití indikuje **lékař**; ve výjimečných neodkladných případech může indikovat i přítomný **nelékařský zdravotnický pracovník** (sestra), ale lékař musí být **neprodleně informován a musí odůvodněnost omezení potvrdit**. Pokud je dobrovolně hospitalizovaný pacient omezen ve volném pohybu až v průběhu léčení, musí to poskytovatel oznámit soudu **do 24 hodin** (nedá-li pacient v této lhůtě souhlas).
+- **Právní opora:** § 39 odst. 1–3 a § 40 odst. 1 písm. b) zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** Mezi omezovací prostředky dle § 39 odst. 1 písm. f) ZZS patří i **psychofarmaka podaná parenterálně (injekčně) za účelem omezení volného pohybu** (tzv. chemická kurtáž), která není poskytováním léčby na žádost pacienta nebo soustavné léčby psychické poruchy.
+
+---
+
+### Okruh 5: Povinná mlčenlivost a zdravotnická dokumentace
+
+**[Karta 5.1]**
+- **Otázka:** Kdy může lékař sdělit údaje ze zdravotnické dokumentace Policii ČR v trestním řízení BEZ souhlasu pacienta?
+- **Vodítko:** § 8 odst. 5 trestního řádu vs. výjimky v TZ (§ 367, § 368) a zákoně o Policii ČR (§ 68 odst. 3).
+- **Odpověď:** Obecně v trestním řízení pouze s **předchozím souhlasem soudce** (§ 8 odst. 5 tr. řádu). Bez souhlasu soudce i pacienta pouze tehdy, jde-li o: 1. plnění zákonné povinnosti **překazit (§ 367 TZ) nebo oznámit (§ 368 TZ)** taxativně vymezený trestný čin, 2. dotaz policie na dobu a místo poskytnutí služby pro účely **pátrání po hledané nebo pohřešované osobě** (§ 68 odst. 3 zák. o Policii ČR), nebo 3. obranu samotného lékaře/poskytovatele v trestním řízení (§ 51 odst. 2 písm. d) ZZS).
+- **Právní opora:** § 51 odst. 1 a 2 ZZS; § 8 odst. 5 zákona č. 141/1961 Sb. (tr. řád); § 367 a § 368 TZ; § 68 odst. 3 zákona č. 273/2008 Sb.
+- **Chyták / Judikatura:** V **civilním soudním řízení** soudce zprostit lékaře mlčenlivosti **nemůže**! Zprostit jej může pouze pacient (nebo příslušný správní orgán z důležitého státního zájmu), ledaže jde o spor mezi pacientem a poskytovatelem, kde se poskytovatel brání žalobě (§ 51 odst. 2 písm. d) ZZS).
+
+**[Karta 5.2]**
+- **Otázka:** Dospělá pacientka vyhledá lékaře po dokonaném znásilnění (§ 185 TZ) nebo ublížení na zdraví (§ 146 TZ). Další útok nehrozí a pacientka výslovně zakáže věc hlásit policii. Smí nebo musí to lékař oznámit?
+- **Vodítko:** Srovnej taxativní výčet trestných činů v § 367 TZ (nepřekažení) a § 368 TZ (neoznámení).
+- **Odpověď:** Lékař čin **nesmí oznámit** a je vázán povinnou mlčenlivostí! Trestný čin znásilnění (§ 185 TZ) ani běžné ublížení na zdraví (§ 146 TZ) **nejsou uvedeny v § 368 TZ (neoznámení trestného činu)**. Znásilnění je uvedeno pouze v § 367 TZ (nepřekažení připravovaného či páchaného činu).
+- **Právní opora:** § 51 odst. 1 ZZS; § 367 a § 368 zákona č. 40/2009 Sb., trestní zákoník.
+- **Chyták / Judikatura:** Naopak u trestného činu **těžkého ublížení na zdraví (§ 145 TZ)** nebo **týrání svěřené osoby (§ 198 TZ – např. týrané dítě či senior)** zákonná oznamovací povinnost podle § 368 TZ platí a prolomí mlčenlivost i proti vůli oběti či zákonných zástupců!
+
+**[Karta 5.3]**
+- **Otázka:** Jaká práva na informace a nahlížení do dokumentace mají osoby blízké po smrti pacienta, pokud jim zemřelý za života vyslovil ZÁKAZ informace sdělovat?
+- **Vodítko:** § 33 odst. 4 ZZS.
+- **Odpověď:** Pokud zemřelý pacient za života vyslovil zákaz sdělovat informace určitým osobám blízkým, lze jim informaci podat (a umožnit nahlížení v nezbytném rozsahu) **pouze tehdy, je-li to v zájmu ochrany jejich zdraví nebo ochrany zdraví další osoby** (např. při zjištění závažné genetické nebo infekční choroby).
+- **Právní opora:** § 33 odst. 4 věta druhá a § 65 odst. 1 písm. c) zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** Pokud pacient za života žádný zákaz nevyslovil, mají osoby blízké po jeho smrti plné právo na informace o příčinách úmrtí, výsledku pitvy i právo nahlížet do dokumentace a pořizovat si její kopie (§ 33 odst. 4 věta první ZZS).
+
+**[Karta 5.4]**
+- **Otázka:** Kdy a v jaké výši může poskytovatel požadovat po pacientovi úhradu za pořízení kopie nebo výpisu ze zdravotnické dokumentace?
+- **Vodítko:** § 66 odst. 3 ZZS (ve znění novely č. 240/2024 Sb.) a rozsudek SDEU C-307/22 (GDPR).
+- **Odpověď:** Za **první pořízení** výpisu nebo kopie zdravotnické dokumentace **nelze po pacientovi požadovat žádnou úhradu** (je zcela zdarma). Úhradu (ve výši účelně vynaložených nákladů spojených s pořízením a odesláním) lze požadovat pouze při **opakované žádosti** ohledně týchž údajů.
+- **Právní opora:** § 66 odst. 3 zákona č. 372/2011 Sb. (ZZS); čl. 15 odst. 3 nařízení GDPR; rozsudek SDEU ve věci C-307/22.
+- **Chyták / Judikatura:** Lhůta pro pořízení výpisu nebo kopie poskytovatelem činí **30 dnů** od obdržení žádosti pacienta (u nahlížení osob oprávněných dle § 65 odst. 2 ZZS je lhůta pro pořízení kopie 15 dnů – § 66 odst. 1 ZZS).
+
+---
+
+### Okruh 6: Odpovědnost ve zdravotnictví, smlouva o péči o zdraví a stížnosti
+
+**[Karta 6.1]**
+- **Otázka:** Jaká je povaha odpovědnosti poskytovatele za škodu způsobenou vadou použitého lékařského přístroje nebo léčivého přípravku podle § 2936 OZ?
+- **Vodítko:** Lze se této odpovědnosti zprostit (liberovat)?
+- **Odpověď:** Jde o **absolutní objektivní odpovědnost** (odpovědnost bez ohledu na zavinění a **bez možnosti liberace**). Použije-li poskytovatel při zdravotní službě vadnou věc (přístroj, nástroj, implantát, lék), nahradí škodu tím způsobenou, i kdyby vadu nemohl při vynaložení veškeré péče odhalit.
+- **Právní opora:** § 2936 zákona č. 89/2012 Sb. (OZ).
+- **Chyták / Judikatura:** Pozor: Odpovědnost dle § 2936 OZ dopadá na *vadu či vnitřní vlastnost použité věci* (např. prasklý vadný katétr, kontaminovaná šarže léku), nikoliv na běžné medicínské vedlejší účinky bezvadného léku, o nichž byl pacient řádně poučen. Poskytovatel má následně regresní nárok vůči výrobci či distributorovi.
+
+**[Karta 6.2]**
+- **Otázka:** Jakou míru jistoty vyžaduje judikatura Ústavního soudu při prokazování příčinné souvislosti (kauzálního nexu) mezi pochybením lékaře (*non lege artis*) a újmou na zdraví pacienta?
+- **Vodítko:** Proč je požadavek 100% jistoty v medicínských sporech protiústavní?
+- **Odpověď:** V medicínských sporech vzhledem ke složitosti biologických procesů nelze příčinnou souvislost prokázat se 100% jistotou. Ústavní soud judikuje, že požadavek 100% jistoty porušuje právo na spravedlivý proces (čl. 36 odst. 1 LZPS) a ke shledání příčinné souvislosti postačuje **vysoká (převážná) míra pravděpodobnosti**.
+- **Právní opora:** Čl. 36 odst. 1 LZPS; § 2910 a § 2913 OZ; nálezy Ústavního soudu sp. zn. I. ÚS 1919/08, IV. ÚS 14/17.
+- **Chyták / Judikatura:** Pokud navíc poskytovatel porušil povinnost řádně a úplně vést zdravotnickou dokumentaci (§ 53 ZZS), nesmí jít výsledná důkazní nouze k tíži pacienta – soud může přistoupit k usnadnění či obrácení důkazního břemene ohledně odborného postupu.
+
+**[Karta 6.3]**
+- **Otázka:** Za jakých podmínek může poskytovatel jednostranně UKONČIT již probíhající péči o pacienta kvůli tomu, že pacient porušuje vnitřní řád nebo nedodržuje léčebný postup?
+- **Vodítko:** § 48 odst. 2 písm. d) a § 48 odst. 4 ZZS – 2 kumulativní ochranné pojistky.
+- **Odpověď:** Ukončit péči lze tehdy, pokud pacient závažně omezuje práva ostatních pacientů, **úmyslně a soustavně** nedodržuje navržený léčebný postup nebo se neřídí vnitřním řádem, A ZÁROVEŇ jsou splněny dvě podmínky: 1. jeho chování **není způsobeno zdravotním stavem**, a 2. ukončením péče **nedojde k bezprostřednímu ohrožení života nebo vážnému poškození jeho zdraví**.
+- **Právní opora:** § 48 odst. 2 písm. d), odst. 4 a 5 zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** O odmítnutí přijetí do péče i o ukončení péče musí poskytovatel vždy vydat pacientovi **písemnou zprávu s uvedením důvodu** (§ 48 odst. 5 ZZS). Jinak se dopouští přestupku.
+
+**[Karta 6.4]**
+- **Otázka:** Jak funguje dvoustupňový systém vyřizování stížností proti postupu poskytovatele podle § 93–94 ZZS a jaké jsou zákonné lhůty?
+- **Vodítko:** 1. stupeň u poskytovatele, 2. stupeň u krajského úřadu.
+- **Odpověď:** 1. Stížnost se podává nejprve **poskytovateli**, který ji musí vyřídit do **30 dnů** (lze odůvodněně prodloužit o dalších 30 dnů). 2. Pokud stěžovatel s vyřízením nesouhlasí, může do **30 dnů** od doručení (nebo marného uplynutí lhůty) podat stížnost **příslušnému správnímu orgánu** (typicky krajskému úřadu), který udělil oprávnění.
+- **Právní opora:** § 93 a § 94 zákona č. 372/2011 Sb. (ZZS).
+- **Chyták / Judikatura:** Podání stížnosti nesmí být stěžovateli ani pacientovi na újmu (§ 93 odst. 3 ZZS) a vyřizování stížností nepodléhá správnímu řádu jako klasické správní řízení o právech a povinnostech.
+
+---
+
+### Okruh 7: Specifické zdravotní služby a veřejné zdravotní pojištění
+
+**[Karta 7.1]**
+- **Otázka:** Jaké jsou věkové hranice a minimální lhůty na rozmyšlenou u sterilizace ze zdravotních důvodů a u sterilizace z jiných než zdravotních důvodů?
+- **Vodítko:** § 13 až § 15 zákona č. 373/2011 Sb., o specifických zdravotních službách (ZSZS).
+- **Odpověď:**
+  - **Ze zdravotních důvodů:** věk min. **18 let** (u nezletilých a osob s omezenou svéprávností jen se souhlasem odborné komise a soudu), lhůta mezi informováním a udělením souhlasu bezprostředně před výkonem min. **7 dnů**.
+  - **Z jiných než zdravotních důvodů:** věk min. **21 let** (pouze plně svéprávný pacient), lhůta mezi informováním a souhlasem min. **14 dnů**.
+- **Právní opora:** § 12–16 zákona č. 373/2011 Sb. (ZSZS).
+- **Chyták / Judikatura:** Sterilizaci z jiných než zdravotních důvodů u nezletilého nebo u pacienta s omezenou svéprávností nelze provést za žádných okolností (ani se souhlasem soudu)!
+
+**[Karta 7.2]**
+- **Otázka:** Komu a do jakého věku lze provést umělé oplodnění (asistovanou reprodukci) a jak je upravena anonymita dárce?
+- **Vodítko:** § 3, § 6 a § 10 zákona č. 373/2011 Sb. (ZSZS).
+- **Odpověď:** Asistovanou reprodukci lze provést ženě v reprodukčním věku, pokud její věk **nepřekročil 49 let**, a to pouze na základě písemné žádosti **neplodného páru, který tvoří žena a muž** (žádost nesmí být starší než 6 měsíců). Poskytovatel je povinen zajistit **vzájemnou anonymitu** anonymního dárce a neplodného páru i dítěte.
+- **Právní opora:** § 3 odst. 2, § 6 odst. 1 a § 10 zákona č. 373/2011 Sb. (ZSZS).
+- **Chyták / Judikatura:** Asistovanou reprodukci nelze v ČR podle platného zákona poskytnout jednotlivkyni (single ženě) bez partnera-muže. Muž z neplodného páru (i když není manželem ženy) se udělením souhlasu s umělým oplodněním stává ze zákona otcem dítěte (§ 778 OZ).
+
+**[Karta 7.3]**
+- **Otázka:** Jak změnil nález Ústavního soudu sp. zn. Pl. ÚS 52/23 (s účinností od 1. 7. 2025) právní úpravu změny pohlaví transsexuálních pacientů?
+- **Vodítko:** § 29 odst. 1 OZ a § 21 odst. 1 ZSZS.
+- **Odpověď:** Ústavní soud **zrušil zákonný požadavek chirurgického zákroku spojeného s onemožněním reprodukční funkce (sterilizace/kastrace)** jako podmínku pro úřední (statusovou) změnu pohlaví z důvodu rozporu s lidskou důstojností a nedotknutelností osoby (čl. 7 odst. 1 LZPS, čl. 8 EÚLP).
+- **Právní opora:** Nález Ústavního soudu sp. zn. Pl. ÚS 52/23; § 29 odst. 1 OZ; § 21–23 zákona č. 373/2011 Sb. (ZSZS).
+- **Chyták / Judikatura:** Samotné chirurgické výkony směřující ke změně pohlaví na žádost pacienta (od 18 let po kladném stanovisku odborné komise MZ dle § 21 odst. 3 ZSZS) zůstávají medicínsky možné, ale nejsou již nutnou podmínkou pro změnu úředního zápisu v matrice.
+
+**[Karta 7.4]**
+- **Otázka:** Za jakých podmínek musí zdravotní pojišťovna uhradit zdravotní službu, která je jinak z veřejného zdravotního pojištění NEHRAZENA, a co řekl Ústavní soud v nálezu Pl. ÚS 36/11 (tzv. nadstandardy)?
+- **Vodítko:** § 16 zákona č. 48/1997 Sb. (ZVZP) a čl. 31 LZPS (výhrada zákona).
+- **Odpověď:** Podle **§ 16 ZVZP** pojišťovna hradí ve výjimečných případech i jinak nehrazené zdravotní služby, je-li jejich poskytnutí **jedinou možností z hlediska zdravotního stavu pojištěnce** (s předchozím souhlasem revizního lékaře, vyjma nebezpečí z prodlení). V nálezu **Pl. ÚS 36/11** Ústavní soud konstatoval, že vymezení rozsahu bezplatné péče a ekonomicky náročnější varianty nesmí být ponecháno vyhlášce MZ, ale **musí být stanoveno přímo zákonem (výhrada zákona dle čl. 31 LZPS)**.
+- **Právní opora:** Čl. 31 LZPS; § 13 a § 16 zákona č. 48/1997 Sb. (ZVZP); nález ÚS sp. zn. Pl. ÚS 36/11.
+- **Chyták / Judikatura:** Žádnou zdravotní péči, kterou lze z medicínského hlediska poskytnout pouze jediným způsobem, nelze označit za ekonomicky náročnější variantu (nadstandard).
+
+---
+
+## B. DATABÁZE BLESKOVÉHO DRILU (REŽIM 2)
+
+### Podzáložka A: Číselná palba (Lhůty a věkové hranice)
+1. **Lhůta pro oznámení převzetí pacienta bez souhlasu soudu (§ 40 odst. 1 ZZS):** `24 hodin` (Možnosti: 12 hodin / 24 hodin / 48 hodin / 7 dnů).
+2. **Lhůta, ve které musí soud rozhodnout o přípustnosti převzetí v 1. fázi detenčního řízení (§ 77 z. ř. s.):** `7 dnů` (Možnosti: 24 hodin / 3 dny / 7 dnů / 30 dnů).
+3. **Lhůta, ve které musí soud rozhodnout o přípustnosti dalšího držení v ústavu ve 2. fázi (§ 82 odst. 1 z. ř. s.):** `3 měsíce od výroku o přípustnosti převzetí` (Možnosti: 30 dnů / 3 měsíce / 6 měsíců / 1 rok).
+4. **Minimální věk, od kterého vážný odpor nezletilého brání provedení zákroku bez souhlasu soudu, i když rodiče souhlasí (§ 100 odst. 1 OZ):** `14 let` (Možnosti: 12 let / 14 let / 15 let / 16 let).
+5. **Minimální věk a lhůta na rozmyšlenou u sterilizace z JINÝCH než zdravotních důvodů (§ 13 a § 15 ZSZS):** `21 let a 14 dnů` (Možnosti: 18 let a 7 dnů / 18 let a 14 dnů / 21 let a 7 dnů / 21 let a 14 dnů).
+6. **Maximální věk ženy pro provedení umělého oplodnění – asistované reprodukce (§ 6 odst. 1 ZSZS):** `49 let` (Možnosti: 40 let / 45 let / 49 let / 55 let).
+7. **Maximální stáří písemné žádosti neplodného páru o asistovanou reprodukci (§ 3 odst. 3 ZSZS):** `6 měsíců` (Možnosti: 3 měsíce / 6 měsíců / 12 měsíců / 24 měsíců).
+8. **Základní lhůta pro vyřízení stížnosti poskytovatelem zdravotních služeb (§ 93 odst. 4 ZZS):** `30 dnů` (Možnosti: 15 dnů / 30 dnů / 60 dnů / 90 dnů).
+9. **Cena za PRVNÍ pořízení kopie zdravotnické dokumentace na žádost pacienta (§ 66 odst. 3 ZZS):** `0 Kč – bezplatně` (Možnosti: 0 Kč – bezplatně / 5 Kč za stranu / účelně vynaložené náklady / 250 Kč paušál).
+10. **Maximální doba pobytu na lůžku u „jednodenní péče“ (§ 8 odst. 1 ZZS):** `kratší než 24 hodin` (Možnosti: kratší než 12 hodin / kratší než 24 hodin / kratší než 48 hodin / do propuštění téhož kalendářního dne).
+
+### Podzáložka B: Semafor mlčenlivosti a souhlasů
+1. **Policie ČR žádá bez souhlasu soudce informaci o době a místě ošetření celostátně pohřešované osoby.** -> `SDĚLIT BEZ SOUHLASU` (§ 68 odst. 3 zák. o Policii ČR).
+2. **Policie ČR žádá v trestním řízení pro přečin ublížení na zdraví (§ 146 TZ) zdravotnickou dokumentaci obviněného bez jeho souhlasu a bez souhlasu soudce.** -> `ODEPŘÍT` (Nutný předchozí souhlas soudce dle § 8 odst. 5 tr. řádu).
+3. **Soudce v civilním rozvodovém řízení vyzve psychiatra, aby bez souhlasu pacienta vypovídal o jeho duševní nemoci, s tím, že ho „jako soudce zprošťuje mlčenlivosti“.** -> `ODEPŘÍT` (Civilní soudce nemá pravomoc zprostit zdravotníka mlčenlivosti dle § 51 ZZS).
+4. **Dospělá pacientka přijde po včerejším znásilnění (§ 185 TZ), další útok nehrozí, výslovně zakáže lékaři volat policii.** -> `ZACHOVAT MLČENLIVOST` (Znásilnění není v § 368 TZ – neoznámení TČ, ale jen v § 367 TZ – nepřekažení).
+5. **Pediatr zjistí u 4letého dítěte známky soustavného týrání rodiči (§ 198 TZ – týrání svěřené osoby). Rodiče zakazují kohokoliv informovat.** -> `OZNÁMIT BEZ SOUHLASU` (Povinnost překazit i oznámit dle § 367 a § 368 TZ + § 10 odst. 4 ZSPOD).
+6. **Bývalý pacient zažaloval nemocnici o 2 miliony Kč za pochybení při operaci a nemocnice chce předložit soudu jeho dokumentaci na svou obranu, ačkoliv pacient ji mlčenlivosti nezprostil.** -> `PŘEDLOŽIT BEZ SOUHLASU` (Výjimka z mlčenlivosti pro obranu práv poskytovatele dle § 51 odst. 2 písm. d) ZZS v nezbytném rozsahu).
+
+---
+
+## C. DATABÁZE PRO „PRÁVNÍ RENTGEN“ (REŽIM 3 – ODHAL VADY V DOKUMENTU)
+
+### Dokument 1: Dříve vyslovené přání (Obsahuje 3 právní chyby)
+> **Věta 1 (V POŘÁDKU):** „Já, níže podepsaný Jan Dvořák, nar. 12. 4. 1958, plně svéprávný, tímto pro případ, že bych se dostal do takového zdravotního stavu, ve kterém nebudu schopen vyslovit souhlas nebo nesouhlas s poskytnutím zdravotních služeb, vyslovuji toto dříve vyslovené přání.“ *(V souladu s § 36 odst. 1 ZZS).*
+> **Věta 2 (V POŘÁDKU):** „V případě zástavy oběhu v terminálním stádiu mého onkologického onemocnění si nepřeji provádění kardiopulmonální resuscitace ani napojení na umělou plicní ventilaci.“ *(Přípustné odmítnutí péče dle § 36 odst. 1 ZZS).*
+> **Věta 3 (PRÁVNÍ CHYBA 1/3):** „Pokud bych trpěl nesnesitelnými bolestmi, které nepůjde běžnými analgetiky tlumit, žádám, aby mi ošetřující lékař nitrožilně podal smrtící dávku chloridu draselného k rychlému ukončení života.“ *(CHYBA: Podle § 36 odst. 5 písm. b) ZZS nelze respektovat dříve vyslovené přání, pokud nabádá k takovým postupům, jejichž výsledkem je aktivní způsobení smrti – zákaz aktivní eutanazie).*
+> **Věta 4 (PRÁVNÍ CHYBA 2/3):** „Toto přání sepisuji doma za přítomnosti své manželky a souseda jako svědků, a proto můj podpis na této listině nemusí být úředně ověřen.“ *(CHYBA: Podle § 36 odst. 3 ZZS musí být DVP sepsané mimo zdravotnické zařízení opatřeno úředně ověřeným podpisem pacienta; podpis se svědkem bez úředního ověření stačí pouze tehdy, je-li DVP učiněno přímo při přijetí do péče nebo během hospitalizace do zdravotnické dokumentace dle § 36 odst. 4 ZZS).*
+> **Věta 5 (PRÁVNÍ CHYBA 3/3):** „Prohlašuji, že jsem si veškeré medicínské důsledky nastudoval sám z odborné literatury a písemné poučení lékařem nepotřebuji.“ *(CHYBA: Podle § 36 odst. 2 ZZS platí, že DVP bude bráno v zřetel jen tehdy, je-li jeho součástí písemné poučení o důsledcích rozhodnutí provedené praktickým lékařem nebo jiným ošetřujícím lékařem v daném oboru).*
+
+### Dokument 2: Zápis o zadržení informace a hospitalizaci (Obsahuje 3 právní chyby)
+> **Věta 1 (V POŘÁDKU):** „Pacientka Marie Černá (72 let) byla dne 14. 10. přijata k plánované hospitalizaci na interním oddělení na základě jí podepsaného písemného informovaného souhlasu s hospitalizací.“ *(V souladu s § 34 odst. 2 písm. c) ZZS).*
+> **Věta 2 (PRÁVNÍ CHYBA 1/3):** „Vzhledem k tomu, že histologické vyšetření prokázalo zhoubný nádor slinivky a pacientka je psychicky křehká, rozhodl jsem jako ošetřující lékař zcela samostatně bez konzultace s jiným lékařem o zadržení této informace, přičemž přímá žádost pacientky o sdělení pravdivé diagnózy na mém rozhodnutí nic nemění.“ *(CHYBA: Dvojí porušení § 2640 OZ! Podle § 2640 odst. 1 OZ se má za to, že poskytovatel právo zadržet informaci nemá, nepotvrdí-li mu zjevnost a vážnost nebezpečí jiná osoba poskytující péči v daném oboru. Podle § 2640 odst. 2 OZ navíc informaci nelze zadržet, žádá-li pacient výslovně přesnou a pravdivou informaci).*
+> **Věta 3 (V POŘÁDKU):** „Dne 16. 10. ve 23:00 došlo u pacientky k rozvoji těžkého deliria s bezprostředním ohrožením života (pokus o vyskočení z okna), pročež bylo po selhání mírnějších postupů indikováno omezení v pohybu ochrannými pásy.“ *(V souladu s § 39 odst. 1 písm. b) a odst. 2 ZZS).*
+> **Věta 4 (PRÁVNÍ CHYBA 2/3):** „Jelikož pacientka při nástupu do nemocnice dne 14. 10. podepsala písemný souhlas s hospitalizací, nevzniká nemocnici žádná povinnost oznamovat toto třídenní přikurtování a držení na lůžku soudu.“ *(CHYBA: Podle § 40 odst. 1 písm. b) ZZS je poskytovatel povinen oznámit soudu do 24 hodin i dodatečné omezení dobrovolně přijatého pacienta ve volném pohybu až v průběhu léčení, pokud s tím pacient v této 24hodinové lhůtě nevyslovil souhlas).*
+> **Věta 5 (PRÁVNÍ CHYBA 3/3):** „Žádosti syna pacientky o pořízení první kopie dosavadní zdravotnické dokumentace (na základě plné moci a určení pacientkou) vyhovíme až poté, co na pokladně nemocnice uhradí poplatek 400 Kč za tisk.“ *(CHYBA: Podle § 66 odst. 3 ZZS a čl. 15 odst. 3 GDPR je první pořízení výpisu nebo kopie zdravotnické dokumentace bezplatné).*
+
+### Dokument 3: Záznam ze specifických zdravotních služeb (Obsahuje 3 právní chyby)
+> **Věta 1 (PRÁVNÍ CHYBA 1/3):** „Pacientce Petře K. (34 let, bez partnera) byla na základě její samostatné písemné žádosti provedena asistovaná reprodukce darovanými spermiemi.“ *(CHYBA: Podle § 3 odst. 2 a § 6 odst. 1 zákona č. 373/2011 Sb. lze umělé oplodnění provést pouze na základě písemné žádosti neplodného páru, který tvoří žena a muž; single ženě jej v ČR provést nelze).*
+> **Věta 2 (V POŘÁDKU):** „Neplodnému páru bylo sděleno, že identitu anonymního dárce zárodečných buněk jim poskytovatel ze zákona nesmí odhalit.“ *(V souladu s § 10 zákona č. 373/2011 Sb.).*
+> **Věta 3 (PRÁVNÍ CHYBA 2/3):** „Pacientovi Lukáši M. (19 let, plně svéprávný), který nemá žádné zdravotní obtíže, ale nepřeje si mít v budoucnu děti, byla na jeho žádost provedena sterilizace z jiných než zdravotních důvodů, a to 3 dny po podání informace.“ *(CHYBA: Dvojí porušení § 13 a § 15 odst. 2 zákona č. 373/2011 Sb.! Sterilizaci z jiných než zdravotních důvodů lze provést až od dovršení 21 let věku a lhůta mezi informováním a udělením souhlasu musí činit nejméně 14 dnů).*
+> **Věta 4 (PRÁVNÍ CHYBA 3/3):** „Pacientovi ve výkonu trestu odnětí svobody byla na jeho vlastní písemnou žádost schválena a provedena kastrace kvůli parafilní poruše.“ *(CHYBA: Podle § 20 zákona č. 373/2011 Sb. platí absolutní zákaz provést kastraci osobám ve výkonu vazby, trestu odnětí svobody nebo zabezpečovací detence).*

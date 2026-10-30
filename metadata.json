@@ -1,0 +1,6 @@
+{
+  "name": "Zdravotnické právo – Kartotéka & Dril",
+  "description": "Profesionální studijní systém pro systematické procvičování a opakování českého zdravotnického práva od základů (ZZS, OZ, Úmluva o biomedicíně, trestní právo).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
