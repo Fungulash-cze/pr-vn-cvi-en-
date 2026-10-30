@@ -232,7 +232,11 @@ export const DrillMode: React.FC<DrillModeProps> = ({
     setSemFinished(false);
 
     setShowAnswerInStudy(false);
-  }, [activeTestItems, activeNumericItems, activeSemaphoreItems]);
+
+    if (activeSemaphoreItems.length === 0 && subTab === 'semaphore') {
+      setSubTab('test');
+    }
+  }, [activeTestItems, activeNumericItems, activeSemaphoreItems, subTab]);
 
   // Reset answer revelation when switching subtabs
   useEffect(() => {
@@ -310,18 +314,20 @@ export const DrillMode: React.FC<DrillModeProps> = ({
             <span className="font-mono text-xs opacity-75">[{activeNumericItems.length}]</span>
           </button>
 
-          <button
-            onClick={() => setSubTab('semaphore')}
-            className={`px-3.5 py-2 text-xs sm:text-sm font-bold border-1.5 border-[#161615] cursor-pointer transition-all flex items-center gap-2 whitespace-nowrap ${
-              subTab === 'semaphore'
-                ? 'bg-[#161615] text-[#FCFBF9] shadow-[2.5px_2.5px_0px_#575653]'
-                : 'bg-[#FCFBF9] text-[#161615] shadow-[2px_2px_0px_#161615] hover:-translate-x-0.5 hover:-translate-y-0.5'
-            }`}
-          >
-            <Zap className="w-4 h-4 text-[#16A34A]" />
-            <span>Právní semafor</span>
-            <span className="font-mono text-xs opacity-75">[{activeSemaphoreItems.length}]</span>
-          </button>
+          {activeSemaphoreItems.length > 0 && (
+            <button
+              onClick={() => setSubTab('semaphore')}
+              className={`px-3.5 py-2 text-xs sm:text-sm font-bold border-1.5 border-[#161615] cursor-pointer transition-all flex items-center gap-2 whitespace-nowrap ${
+                subTab === 'semaphore'
+                  ? 'bg-[#161615] text-[#FCFBF9] shadow-[2.5px_2.5px_0px_#575653]'
+                  : 'bg-[#FCFBF9] text-[#161615] shadow-[2px_2px_0px_#161615] hover:-translate-x-0.5 hover:-translate-y-0.5'
+              }`}
+            >
+              <Zap className="w-4 h-4 text-[#16A34A]" />
+              <span>Právní semafor</span>
+              <span className="font-mono text-xs opacity-75">[{activeSemaphoreItems.length}]</span>
+            </button>
+          )}
         </div>
 
         {/* Study Mode vs Test Mode Toggle */}
@@ -789,10 +795,7 @@ export const DrillMode: React.FC<DrillModeProps> = ({
         </div>
       )}
 
-      {/* ================================================================
-          SUBTAB C: SEMAPHORE DRILL (MLČENLIVOST A SOUHLASY)
-          ================================================================ */}
-      {subTab === 'semaphore' && (
+      {subTab === 'semaphore' && activeSemaphoreItems.length > 0 && (
         <div className="space-y-4">
           {!semFinished && currentSemItem ? (
             <div className="hard-card p-6 sm:p-8 space-y-6">

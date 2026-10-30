@@ -1030,48 +1030,8 @@ export const CIVIL_LAW_NUMERIC_ITEMS: NumericDrillItem[] = [
   },
 ];
 
-export const CIVIL_LAW_SEMAPHORE_ITEMS: SemaphoreDrillItem[] = [
-  {
-    id: 101,
-    situation: 'Strana uzavřela kupní smlouvu v podstatném omylu vyvolaném druhou stranou, která o tomto omylu věděla (§ 583 OZ). Jaký je právní následek?',
-    correctAction: 'ODEPŘÍT', // Relativní neplatnost - lze se dovolat
-    options: ['ODEPŘÍT', 'SDĚLIT BEZ SOUHLASU', 'ZACHOVAT MLČENLIVOST', 'PŘEDLOŽIT BEZ SOUHLASU'],
-    legalBasis: '§ 583 a § 586 odst. 1 OZ',
-    explanation: 'Jednání je relativně neplatné. Smlouva platí a zavazuje, dokud se oklamaná strana neplatnosti aktivně nedovolá.',
-  },
-  {
-    id: 102,
-    situation: 'Ve smlouvě je ujednání: „Objednatel se tímto předem vzdává jakéhokoliv práva na náhradu budoucí škody z vad díla způsobené zhotovitelem.“ (§ 2898 OZ)',
-    correctAction: 'ZACHOVAT MLČENLIVOST', // Zdánlivost / Nicotnost
-    options: ['ODEPŘÍT', 'SDĚLIT BEZ SOUHLASU', 'ZACHOVAT MLČENLIVOST', 'PŘEDLOŽIT BEZ SOUHLASU'],
-    legalBasis: '§ 1 odst. 2 a § 2898 OZ',
-    explanation: 'K ujednání, kterým se někdo předem vzdává práva na náhradu škody nebo újmy na přirozených právech, se nepřihlíží (je zdánlivé / nicotné).',
-  },
-  {
-    id: 103,
-    situation: 'Převod vlastnického práva k rodinnému domu s pozemkem uzavřený pouze ústním podáním ruky bez písemné smlouvy (§ 560 a § 588 OZ).',
-    correctAction: 'ODEPŘÍT', // Absolutní neplatnost
-    options: ['ODEPŘÍT', 'SDĚLIT BEZ SOUHLASU', 'ZACHOVAT MLČENLIVOST', 'PŘEDLOŽIT BEZ SOUHLASU'],
-    legalBasis: '§ 560 a § 588 OZ',
-    explanation: 'Absolutní neplatnost. Nedodržení zákonem předepsané písemné formy u věcných práv k nemovitostem způsobuje neplatnost, k níž soud přihlíží i bez návrhu.',
-  },
-  {
-    id: 104,
-    situation: 'Závěť sepsaná celá vlastní rukou zůstavitele a jím vlastnoručně podepsaná doma na papíře, bez přítomnosti jakýchkoliv svědků či notáře (§ 1533 OZ).',
-    correctAction: 'SDĚLIT BEZ SOUHLASU', // Plně platná
-    options: ['ODEPŘÍT', 'SDĚLIT BEZ SOUHLASU', 'ZACHOVAT MLČENLIVOST', 'PŘEDLOŽIT BEZ SOUHLASU'],
-    legalBasis: '§ 1533 OZ',
-    explanation: 'Plně platné právní jednání (holografní závěť). Pokud je sepsána a podepsána vlastní rukou, zákon žádné svědky nevyžaduje.',
-  },
-  {
-    id: 105,
-    situation: 'Pronajímatel sjednal v nájemní smlouvě na byt zákaz chovu jakéhokoliv zvířete (i křečka v kleci) pod pokutou 50 000 Kč (§ 2258 OZ).',
-    correctAction: 'ZACHOVAT MLČENLIVOST', // Zdánlivé zakázané ujednání
-    options: ['ODEPŘÍT', 'SDĚLIT BEZ SOUHLASU', 'ZACHOVAT MLČENLIVOST', 'PŘEDLOŽIT BEZ SOUHLASU'],
-    legalBasis: '§ 2235 a § 2258 OZ',
-    explanation: 'K ujednáním zkracujícím zákonná práva nájemce (právo chovat zvíře nepůsobící obtíže) se nepřihlíží; takové ustanovení je zdánlivé.',
-  },
-];
+// Právní semafor pro občanské právo byl odstraněn na přání uživatele
+export const CIVIL_LAW_SEMAPHORE_ITEMS: SemaphoreDrillItem[] = [];
 
 export const CIVIL_LAW_XRAY_DOCUMENTS: XRayDocument[] = [
   {
