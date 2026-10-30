@@ -369,6 +369,16 @@ export const generateSingleFileHtml = (): string => {
             Okruh \${card.categoryId}: \${card.categoryName}
           </div>
           <div class="card-question">\${card.question}</div>
+          \${card.options && card.options.length ? \`
+            <div style="margin: 14px 0; display:flex; flex-direction:column; gap:8px;">
+              \${card.options.map(o => \`
+                <div style="padding:10px 14px; border:1.5px solid var(--border-ink); background:#FFF; font-size:13.5px; display:flex; gap:10px; align-items:flex-start;">
+                  <strong style="font-family:'JetBrains Mono',monospace; background:var(--ink); color:#FFF; padding:2px 7px; font-size:11px;">\${o.letter}</strong>
+                  <span>\${o.text}</span>
+                </div>
+              \`).join('')}
+            </div>
+          \` : ''}
           \${showHint ? \`<div class="clue-box"><strong>Vodítko:</strong> \${card.clue}</div>\` : ''}
           <div style="display:flex; gap:10px; margin-top:20px;">
             <button class="btn-action" onclick="toggleHint()">\${showHint ? 'Skrýt vodítko (H)' : 'Zobrazit vodítko (H)'}</button>
@@ -381,6 +391,11 @@ export const generateSingleFileHtml = (): string => {
             <span class="badge \${tagClass}">\${card.lawTagName}</span>
             <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700;">\${card.code} // RUB KARTY</span>
           </div>
+          \${card.correctOption ? \`
+            <div style="background:#DCFCE7; border:1.5px solid #166534; padding:10px 14px; margin-bottom:12px; font-size:13px; font-weight:700; color:#14532D; font-family:'JetBrains Mono',monospace;">
+              SPRÁVNÁ VOLBA: [\${card.correctOption}] \${card.options ? (card.options.find(o => o.letter === card.correctOption) || {}).text || '' : ''}
+            </div>
+          \` : ''}
           <div style="font-weight:700; font-size:16px; margin-bottom:8px; line-height:1.4;">
             \${card.answer}
           </div>

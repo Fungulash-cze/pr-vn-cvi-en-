@@ -28,6 +28,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
   onRateCard,
   onClearCardStatus,
 }) => {
+  const [selectedSet, setSelectedSet] = useState<'all' | 'zaklady' | 'modelove_otazky'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'need_review' | 'mastered' | 'unseen'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -35,10 +36,17 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [showClue, setShowClue] = useState<boolean>(false);
   const [showGridDrawer, setShowGridDrawer] = useState<boolean>(false);
+  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
 
   // Filter cards
   const filteredCards = useMemo(() => {
     return FLASHCARDS.filter(card => {
+      // Set filter
+      if (selectedSet !== 'all') {
+        const cardSet = card.set || 'zaklady';
+        if (cardSet !== selectedSet) return false;
+      }
+
       // Category filter
       if (selectedCategory !== 'all' && card.categoryId.toString() !== selectedCategory) {
         return false;
@@ -64,21 +72,23 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
         const matchesBasis = card.legalBasis.toLowerCase().includes(query);
         const matchesCaution = card.cautionOrCaseLaw.toLowerCase().includes(query);
         const matchesCode = card.code.toLowerCase().includes(query);
-        return matchesQuestion || matchesAnswer || matchesBasis || matchesCaution || matchesCode;
+        const matchesOptions = card.options?.some(o => o.text.toLowerCase().includes(query));
+        return matchesQuestion || matchesAnswer || matchesBasis || matchesCaution || matchesCode || Boolean(matchesOptions);
       }
 
       return true;
     });
-  }, [selectedCategory, statusFilter, searchQuery, cardStatus]);
+  }, [selectedSet, selectedCategory, statusFilter, searchQuery, cardStatus]);
 
-  // Keep index within bounds
+  // Keep index within bounds & reset selection
   useEffect(() => {
     if (currentIndex >= filteredCards.length) {
       setCurrentIndex(Math.max(0, filteredCards.length - 1));
     }
     setIsFlipped(false);
     setShowClue(false);
-  }, [filteredCards.length, selectedCategory, statusFilter, searchQuery]);
+    setSelectedChoice(null);
+  }, [filteredCards.length, selectedSet, selectedCategory, statusFilter, searchQuery]);
 
   const currentCard: Flashcard | undefined = filteredCards[currentIndex];
 
@@ -87,6 +97,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
       setCurrentIndex(prev => prev + 1);
       setIsFlipped(false);
       setShowClue(false);
+      setSelectedChoice(null);
     }
   }, [currentIndex, filteredCards.length]);
 
@@ -95,6 +106,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
       setCurrentIndex(prev => prev - 1);
       setIsFlipped(false);
       setShowClue(false);
+      setSelectedChoice(null);
     }
   }, [currentIndex]);
 
@@ -106,6 +118,10 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
     setShowClue(prev => !prev);
   }, []);
 
+  const handleSelectChoice = useCallback((letter: 'A' | 'B' | 'C' | 'D') => {
+    setSelectedChoice(letter);
+  }, []);
+
   const handleRate = useCallback((status: CardStatus) => {
     if (!currentCard) return;
     onRateCard(currentCard.id, status);
@@ -115,6 +131,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
         setCurrentIndex(prev => prev + 1);
         setIsFlipped(false);
         setShowClue(false);
+        setSelectedChoice(null);
       }, 150);
     }
   }, [currentCard, currentIndex, filteredCards.length, onRateCard]);
@@ -148,12 +165,17 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
       } else if (e.key === '3') {
         e.preventDefault();
         handleRate('GOOD');
+      } else if (currentCard?.options && !isFlipped) {
+        const keyUpper = e.key.toUpperCase();
+        if (keyUpper === 'A' || keyUpper === 'B' || keyUpper === 'C' || keyUpper === 'D') {
+          handleSelectChoice(keyUpper as 'A' | 'B' | 'C' | 'D');
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleFlip, handleToggleClue, handleNext, handlePrev, handleRate]);
+  }, [handleFlip, handleToggleClue, handleNext, handlePrev, handleRate, currentCard, isFlipped, handleSelectChoice]);
 
   // Law tag styling helper
   const getLawTagStyle = (tag: string) => {
@@ -189,21 +211,38 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
       {/* Filter and Search Bar */}
       <div className="hard-card-sm p-4 space-y-3">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Set Selector */}
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs font-bold text-[#575653] whitespace-nowrap">Sada:</span>
+            <select
+              value={selectedSet}
+              onChange={(e) => {
+                setSelectedSet(e.target.value as any);
+                setSelectedCategory('all');
+              }}
+              className="bg-[#FCFBF9] border-1.5 border-[#161615] px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#161615] focus:outline-none"
+            >
+              <option value="all">Všechny sady ({FLASHCARDS.length})</option>
+              <option value="zaklady">Základní právní okruhy ({FLASHCARDS.filter(c => !c.set || c.set === 'zaklady').length})</option>
+              <option value="modelove_otazky">Modelové testové otázky A–D ({FLASHCARDS.filter(c => c.set === 'modelove_otazky').length})</option>
+            </select>
+          </div>
+
           {/* Category Dropdown */}
           <div className="flex items-center gap-2 flex-1">
-            <span className="font-mono text-xs font-bold text-[#575653] whitespace-nowrap">Okruh:</span>
+            <span className="font-mono text-xs font-bold text-[#575653] whitespace-nowrap">Okruh / Skupina:</span>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="bg-[#FCFBF9] border-1.5 border-[#161615] px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#161615] focus:outline-none w-full"
             >
-              <option value="all">Všech 7 okruhů ({FLASHCARDS.length} kartiček)</option>
-              {CATEGORIES.map(cat => {
+              <option value="all">Všechny okruhy v sadě</option>
+              {CATEGORIES.filter(cat => selectedSet === 'all' || cat.set === selectedSet).map(cat => {
                 const count = FLASHCARDS.filter(c => c.categoryId === cat.id).length;
                 const done = FLASHCARDS.filter(c => c.categoryId === cat.id && cardStatus[c.id] === 'GOOD').length;
                 return (
                   <option key={cat.id} value={cat.id}>
-                    Okruh {cat.id}: {cat.title} ({done}/{count} hotovo)
+                    {cat.title} ({done}/{count} hotovo)
                   </option>
                 );
               })}
@@ -211,7 +250,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
           </div>
 
           {/* Search box */}
-          <div className="relative min-w-[220px]">
+          <div className="relative min-w-[200px]">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#8C8A84]" />
             <input
               type="text"
@@ -230,7 +269,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Přehled kartiček ({filteredCards.length})</span>
+            <span>Přehled ({filteredCards.length})</span>
           </button>
         </div>
 
@@ -245,7 +284,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
                 : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
             }`}
           >
-            Všechny ({FLASHCARDS.length})
+            Všechny ({filteredCards.length})
           </button>
           <button
             onClick={() => setStatusFilter('need_review')}
@@ -255,7 +294,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
                 : 'bg-[#FEF2F2] text-[#991B1B] border-[#991B1B]/40 hover:border-[#991B1B]'
             }`}
           >
-            K opakování ({Object.values(cardStatus).filter(s => s === 'AGAIN' || s === 'HARD').length})
+            K opakování ({filteredCards.filter(c => cardStatus[c.id] === 'AGAIN' || cardStatus[c.id] === 'HARD').length})
           </button>
           <button
             onClick={() => setStatusFilter('mastered')}
@@ -265,7 +304,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
                 : 'bg-[#F0FDF4] text-[#166534] border-[#166534]/40 hover:border-[#166534]'
             }`}
           >
-            Zvládnuto ({Object.values(cardStatus).filter(s => s === 'GOOD').length})
+            Zvládnuto ({filteredCards.filter(c => cardStatus[c.id] === 'GOOD').length})
           </button>
           <button
             onClick={() => setStatusFilter('unseen')}
@@ -275,7 +314,7 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
                 : 'bg-[#F5F3EE] text-[#575653] border-[#575653]/40 hover:border-[#575653]'
             }`}
           >
-            Neprojité ({FLASHCARDS.filter(c => !cardStatus[c.id]).length})
+            Neprojité ({filteredCards.filter(c => !cardStatus[c.id]).length})
           </button>
         </div>
       </div>
@@ -401,13 +440,68 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
 
                 {/* CARD FRONT CONTENT */}
                 {!isFlipped ? (
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161615] leading-snug">
                       {currentCard.question}
                     </h2>
 
+                    {/* Options if ABCD multiple-choice */}
+                    {currentCard.options && currentCard.options.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        <div className="text-[11px] font-mono uppercase font-bold text-[#575653] flex items-center justify-between">
+                          <span>Vyberte odpověď [A / B / C / D]:</span>
+                          {selectedChoice && (
+                            <span className={selectedChoice === currentCard.correctOption ? 'text-[#166534] font-bold' : 'text-[#991B1B] font-bold'}>
+                              {selectedChoice === currentCard.correctOption ? '✓ Správně' : `✕ Chybně (správně je ${currentCard.correctOption})`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          {currentCard.options.map((opt) => {
+                            const isChosen = selectedChoice === opt.letter;
+                            const isCorrect = opt.letter === currentCard.correctOption;
+                            let btnStyle = 'bg-[#FFF] border-[#161615]/30 hover:border-[#161615] hover:bg-[#F8F7F4] text-[#161615]';
+
+                            if (selectedChoice) {
+                              if (isCorrect) {
+                                btnStyle = 'bg-[#DCFCE7] border-[#166534] text-[#14532D] font-semibold';
+                              } else if (isChosen) {
+                                btnStyle = 'bg-[#FEE2E2] border-[#991B1B] text-[#7F1D1D] font-semibold';
+                              } else {
+                                btnStyle = 'bg-[#FCFBF9] border-[#161615]/15 text-[#575653] opacity-60';
+                              }
+                            }
+
+                            return (
+                              <button
+                                key={opt.letter}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectChoice(opt.letter);
+                                }}
+                                className={`text-left p-2.5 sm:p-3 border-1.5 transition-all flex items-start gap-3 cursor-pointer ${btnStyle}`}
+                              >
+                                <span className={`font-mono font-bold text-xs px-2 py-0.5 border shrink-0 ${
+                                  selectedChoice && isCorrect
+                                    ? 'bg-[#166534] text-[#FFF] border-[#166534]'
+                                    : selectedChoice && isChosen
+                                    ? 'bg-[#991B1B] text-[#FFF] border-[#991B1B]'
+                                    : 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
+                                }`}>
+                                  {opt.letter}
+                                </span>
+                                <span className="text-xs sm:text-sm flex-1 leading-snug">
+                                  {opt.text}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Clue box if opened */}
-                    {showClue && (
+                    {showClue && currentCard.clue && (
                       <div className="bg-[#FEF3C7] border-1.5 border-dashed border-[#B45309] p-4 text-xs sm:text-sm text-[#78350F] animate-in fade-in duration-150">
                         <div className="flex items-center gap-1.5 font-bold font-mono uppercase text-[11px] mb-1">
                           <HelpCircle className="w-3.5 h-3.5 text-[#B45309]" />
@@ -420,10 +514,22 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
                 ) : (
                   /* CARD BACK CONTENT */
                   <div className="space-y-4 animate-in fade-in duration-150">
+                    {/* If this card has options, highlight the correct option explicitly */}
+                    {currentCard.correctOption && (
+                      <div className="bg-[#DCFCE7] border-1.5 border-[#166534] p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+                        <span className="bg-[#166534] text-white font-mono font-bold text-xs px-2 py-0.5 uppercase tracking-wider shrink-0 w-fit">
+                          Správná možnost: {currentCard.correctOption}
+                        </span>
+                        <span className="text-xs sm:text-sm text-[#14532D] font-bold">
+                          {currentCard.options?.find(o => o.letter === currentCard.correctOption)?.text}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Primary Direct Answer */}
                     <div className="bg-[#F8F7F4] border-l-4 border-[#161615] pl-4 pr-3 py-3 border-y border-r border-[#161615]/20">
                       <div className="font-mono text-[11px] uppercase tracking-wider font-bold text-[#575653] mb-1">
-                        Přímá odpověď:
+                        Přímá odpověď / Odůvodnění:
                       </div>
                       <p className="text-sm sm:text-base text-[#161615] font-semibold leading-relaxed whitespace-pre-line">
                         {currentCard.answer}

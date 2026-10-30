@@ -1,6 +1,5 @@
 import React from 'react';
-import { Download, RotateCcw, Keyboard, CheckCircle2, AlertCircle } from 'lucide-react';
-import { downloadOfflineHtmlFile } from '../utils/exportHtml';
+import { RotateCcw, Keyboard, CheckCircle2, AlertCircle } from 'lucide-react';
 import { CardStatus } from '../utils/storage';
 
 interface HeaderProps {
@@ -47,15 +46,6 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Global Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => downloadOfflineHtmlFile()}
-            className="hard-button bg-[#FCFBF9] hover:bg-[#F0EDE6] text-[#161615] px-3 py-1.5 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
-            title="Stáhnout jako jeden samostatný offline HTML soubor (index.html)"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Exportovat HTML</span>
-          </button>
-
-          <button
             onClick={onOpenShortcutsModal}
             className="hard-button bg-[#FCFBF9] hover:bg-[#F0EDE6] text-[#161615] px-3 py-1.5 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
             title="Zobrazit klávesové zkratky"
@@ -92,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'bg-[#333] text-[#FFF] border-[#555]'
               : 'bg-[#F0EDE6] text-[#161615] border-[#161615]'
           }`}>
-            27 kartiček
+            {totalCards} kartiček
           </span>
         </button>
 
@@ -111,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'bg-[#333] text-[#FFF] border-[#555]'
               : 'bg-[#F0EDE6] text-[#161615] border-[#161615]'
           }`}>
-            Lhůty & Semafor
+            Lhůty, Semafor & Test (66)
           </span>
         </button>
 

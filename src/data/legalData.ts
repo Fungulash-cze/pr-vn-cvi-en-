@@ -1,15 +1,40 @@
+export interface FlashcardOption {
+  letter: 'A' | 'B' | 'C' | 'D';
+  text: string;
+}
+
+import { MODEL_50_FLASHCARDS, MODEL_50_TEST_ITEMS } from './modelQuestions50';
+
 export interface Flashcard {
   id: string;
+  set?: 'zaklady' | 'modelove_otazky';
+  setName?: string;
   categoryId: number;
   categoryName: string;
   code: string; // e.g. "Karta 1.1"
   question: string;
-  clue: string; // Vodítko
+  clue?: string; // Vodítko
+  options?: FlashcardOption[];
+  correctOption?: 'A' | 'B' | 'C' | 'D';
   answer: string; // Odpověď
   legalBasis: string; // Právní opora
   cautionOrCaseLaw: string; // Praktický chyták / Judikatura
   lawTag: 'LZPS' | 'ZZS' | 'OZ' | 'TZ_ZRS';
   lawTagName: string;
+}
+
+export interface ModelTestItem {
+  id: number;
+  groupId: number;
+  groupName: string;
+  code: string;
+  question: string;
+  options: FlashcardOption[];
+  correctOption: 'A' | 'B' | 'C' | 'D';
+  answer: string;
+  legalBasis: string;
+  cautionOrCaseLaw: string;
+  lawTag: 'LZPS' | 'ZZS' | 'OZ' | 'TZ_ZRS';
 }
 
 export interface NumericDrillItem {
@@ -58,50 +83,95 @@ export interface CategoryInfo {
   title: string;
   shortTitle: string;
   lawTag: 'LZPS' | 'ZZS' | 'OZ' | 'TZ_ZRS';
+  set: 'zaklady' | 'modelove_otazky';
 }
 
 export const CATEGORIES: CategoryInfo[] = [
+  // Sada 1: Základní okruhy
   {
     id: 1,
     title: 'Ústavní základy, Úmluva o biomedicíně a základní pojmy ZZS',
     shortTitle: 'Ústava, Úmluva & Základní pojmy',
     lawTag: 'LZPS',
+    set: 'zaklady',
   },
   {
     id: 2,
     title: 'Informovaný souhlas, poučovací povinnost a negativní reverz',
     shortTitle: 'Souhlas, Poučení & Reverz',
     lawTag: 'ZZS',
+    set: 'zaklady',
   },
   {
     id: 3,
     title: 'Dříve vyslovené přání (DVP), nezletilí a osoby s omezenou svéprávností',
     shortTitle: 'DVP, Nezletilí & Svéprávnost',
     lawTag: 'OZ',
+    set: 'zaklady',
   },
   {
     id: 4,
     title: 'Nedobrovolná hospitalizace (detence) a omezovací prostředky',
     shortTitle: 'Detence & Omezovací prostředky',
     lawTag: 'TZ_ZRS',
+    set: 'zaklady',
   },
   {
     id: 5,
     title: 'Povinná mlčenlivost a zdravotnická dokumentace',
     shortTitle: 'Mlčenlivost & Dokumentace',
     lawTag: 'ZZS',
+    set: 'zaklady',
   },
   {
     id: 6,
     title: 'Odpovědnost ve zdravotnictví, smlouva o péči o zdraví a stížnosti',
     shortTitle: 'Odpovědnost, Smlouva & Stížnosti',
     lawTag: 'OZ',
+    set: 'zaklady',
   },
   {
     id: 7,
     title: 'Specifické zdravotní služby a veřejné zdravotní pojištění',
     shortTitle: 'Specifické služby & Pojištění',
     lawTag: 'ZZS',
+    set: 'zaklady',
+  },
+  // Sada 2: Modelové testové otázky (Skupiny 1–5 dle zkušebního PDF)
+  {
+    id: 8,
+    title: 'Skupina 1: Práva pacientů, organizace péče a základní instituty ZZS',
+    shortTitle: '1. Práva pacientů & ZZS (10)',
+    lawTag: 'ZZS',
+    set: 'modelove_otazky',
+  },
+  {
+    id: 9,
+    title: 'Skupina 2: Rodiče, nezletilí, zástupci a dříve vyslovená přání',
+    shortTitle: '2. Rodiče, nezletilí & DVP (10)',
+    lawTag: 'OZ',
+    set: 'modelove_otazky',
+  },
+  {
+    id: 10,
+    title: 'Skupina 3: Omezovací prostředky, detence a duševní zdraví',
+    shortTitle: '3. Omezení & Detence (10)',
+    lawTag: 'TZ_ZRS',
+    set: 'modelove_otazky',
+  },
+  {
+    id: 11,
+    title: 'Skupina 4: Dokumentace, registry a výjimky z mlčenlivosti',
+    shortTitle: '4. Dokumentace & Mlčenlivost (10)',
+    lawTag: 'ZZS',
+    set: 'modelove_otazky',
+  },
+  {
+    id: 12,
+    title: 'Skupina 5: Trestní, civilní a speciální úprava',
+    shortTitle: '5. Trestní & Civilní úprava (10)',
+    lawTag: 'LZPS',
+    set: 'modelove_otazky',
   },
 ];
 
@@ -522,7 +592,14 @@ export const FLASHCARDS: Flashcard[] = [
     lawTag: 'LZPS',
     lawTagName: 'Veřejné pojištění (ZVZP)',
   },
+
+  // ==========================================
+  // SADA 2: MODELOVÉ TESTOVÉ OTÁZKY (50 OTÁZEK Z PDF)
+  // ==========================================
+  ...MODEL_50_FLASHCARDS,
 ];
+
+export const MODEL_TEST_ITEMS: ModelTestItem[] = MODEL_50_TEST_ITEMS;
 
 export const NUMERIC_DRILL_ITEMS: NumericDrillItem[] = [
   {
