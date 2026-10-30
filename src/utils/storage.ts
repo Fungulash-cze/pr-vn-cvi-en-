@@ -1,6 +1,8 @@
 export type CardStatus = 'NEW' | 'AGAIN' | 'HARD' | 'GOOD';
+export type LegalModuleId = 'zdravotnicke' | 'obcanske';
 
 export interface UserProgress {
+  activeModule?: LegalModuleId;
   cardStatus: Record<string, CardStatus>;
   numericDrillScore: { answered: number; correct: number };
   semaphoreDrillScore: { answered: number; correct: number };

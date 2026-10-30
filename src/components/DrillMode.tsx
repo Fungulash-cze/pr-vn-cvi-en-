@@ -24,12 +24,28 @@ import {
   SemaphoreAction,
   MODEL_TEST_ITEMS,
   ModelTestItem,
+  NumericDrillItem,
+  SemaphoreDrillItem,
 } from '../data/legalData';
 
-export const DrillMode: React.FC = () => {
+export interface DrillModeProps {
+  modelTestItems?: ModelTestItem[];
+  numericItems?: NumericDrillItem[];
+  semaphoreItems?: SemaphoreDrillItem[];
+}
+
+export const DrillMode: React.FC<DrillModeProps> = ({
+  modelTestItems,
+  numericItems,
+  semaphoreItems,
+}) => {
+  const activeTestItems = modelTestItems || MODEL_TEST_ITEMS;
+  const activeNumericItems = numericItems || NUMERIC_DRILL_ITEMS;
+  const activeSemaphoreItems = semaphoreItems || SEMAPHORE_DRILL_ITEMS;
+
   const [subTab, setSubTab] = useState<'numeric' | 'semaphore' | 'test'>('test');
 
-  // Study vs Test Mode toggle (user requested ability to browse questions without mandatory answering)
+  // Study vs Test Mode toggle (ability to browse questions without mandatory answering)
   const [isStudyMode, setIsStudyMode] = useState<boolean>(false);
   const [showAnswerInStudy, setShowAnswerInStudy] = useState<boolean>(false);
 
@@ -44,7 +60,8 @@ export const DrillMode: React.FC = () => {
   const handleNumericSelect = (option: string) => {
     if (selectedNumOption !== null) return;
     setSelectedNumOption(option);
-    const item = NUMERIC_DRILL_ITEMS[numIndex];
+    const item = activeNumericItems[numIndex];
+    if (!item) return;
     const isCorrect = option === item.correctAnswer;
     setNumScore(prev => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
@@ -53,7 +70,7 @@ export const DrillMode: React.FC = () => {
   };
 
   const handleNextNumeric = () => {
-    if (numIndex < NUMERIC_DRILL_ITEMS.length - 1) {
+    if (numIndex < activeNumericItems.length - 1) {
       setNumIndex(prev => prev + 1);
       setSelectedNumOption(null);
       setShowAnswerInStudy(false);
@@ -89,7 +106,8 @@ export const DrillMode: React.FC = () => {
   const handleSemaphoreSelect = (action: SemaphoreAction) => {
     if (selectedSemAction !== null) return;
     setSelectedSemAction(action);
-    const item = SEMAPHORE_DRILL_ITEMS[semIndex];
+    const item = activeSemaphoreItems[semIndex];
+    if (!item) return;
     const isCorrect = action === item.correctAction;
     setSemScore(prev => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
@@ -98,7 +116,7 @@ export const DrillMode: React.FC = () => {
   };
 
   const handleNextSemaphore = () => {
-    if (semIndex < SEMAPHORE_DRILL_ITEMS.length - 1) {
+    if (semIndex < activeSemaphoreItems.length - 1) {
       setSemIndex(prev => prev + 1);
       setSelectedSemAction(null);
       setShowAnswerInStudy(false);
@@ -124,18 +142,29 @@ export const DrillMode: React.FC = () => {
   };
 
   // ==========================================
-  // 3. Model Test A–D State (50 Questions from PDF)
+  // 3. Model Test A–D State
   // ==========================================
-  const [testGroupFilter, setTestGroupFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
+  const [testGroupFilter, setTestGroupFilter] = useState<'all' | number>('all');
   const [testIndex, setTestIndex] = useState<number>(0);
   const [selectedTestOption, setSelectedTestOption] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [testScore, setTestScore] = useState<{ correct: number; answered: number }>({ correct: 0, answered: 0 });
   const [testFinished, setTestFinished] = useState<boolean>(false);
 
+  // Dynamically extract groups from activeTestItems
+  const testGroups = useMemo(() => {
+    const map = new Map<number, string>();
+    activeTestItems.forEach(item => {
+      if (!map.has(item.groupId)) {
+        map.set(item.groupId, item.groupName);
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [activeTestItems]);
+
   const filteredTestItems = useMemo(() => {
-    if (testGroupFilter === 'all') return MODEL_TEST_ITEMS;
-    return MODEL_TEST_ITEMS.filter(item => item.groupId === testGroupFilter);
-  }, [testGroupFilter]);
+    if (testGroupFilter === 'all') return activeTestItems;
+    return activeTestItems.filter(item => item.groupId === testGroupFilter);
+  }, [testGroupFilter, activeTestItems]);
 
   const handleTestSelect = useCallback((choice: 'A' | 'B' | 'C' | 'D') => {
     if (selectedTestOption !== null) return;
@@ -184,19 +213,40 @@ export const DrillMode: React.FC = () => {
     setShowAnswerInStudy(false);
   }, [testGroupFilter]);
 
-  // Reset answers when switching subtabs
+  // Reset state when items change (e.g. module switched)
+  useEffect(() => {
+    setTestGroupFilter('all');
+    setTestIndex(0);
+    setSelectedTestOption(null);
+    setTestScore({ correct: 0, answered: 0 });
+    setTestFinished(false);
+
+    setNumIndex(0);
+    setSelectedNumOption(null);
+    setNumScore({ correct: 0, answered: 0 });
+    setNumFinished(false);
+
+    setSemIndex(0);
+    setSelectedSemAction(null);
+    setSemScore({ correct: 0, answered: 0 });
+    setSemFinished(false);
+
+    setShowAnswerInStudy(false);
+  }, [activeTestItems, activeNumericItems, activeSemaphoreItems]);
+
+  // Reset answer revelation when switching subtabs
   useEffect(() => {
     setShowAnswerInStudy(false);
   }, [subTab, isStudyMode]);
 
-  // Global Keyboard shortcut listener for drill/test mode
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') {
+      // Don't trigger if user is in an input or modal
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) {
         return;
       }
 
-      // Arrow navigation works across all tabs without requiring an answer!
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         if (subTab === 'test') handlePrevTest();
@@ -224,8 +274,8 @@ export const DrillMode: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [subTab, testFinished, selectedTestOption, handleTestSelect, handleNextTest, handlePrevTest]);
 
-  const currentNumItem = NUMERIC_DRILL_ITEMS[numIndex];
-  const currentSemItem = SEMAPHORE_DRILL_ITEMS[semIndex];
+  const currentNumItem = activeNumericItems[numIndex];
+  const currentSemItem = activeSemaphoreItems[semIndex];
   const currentTestItem: ModelTestItem | undefined = filteredTestItems[testIndex];
 
   return (
@@ -244,7 +294,7 @@ export const DrillMode: React.FC = () => {
           >
             <FileCheck className="w-4 h-4 text-[#1D4ED8]" />
             <span>Modelový test A–D</span>
-            <span className="font-mono text-xs opacity-75">[{MODEL_TEST_ITEMS.length}]</span>
+            <span className="font-mono text-xs opacity-75">[{activeTestItems.length}]</span>
           </button>
 
           <button
@@ -257,7 +307,7 @@ export const DrillMode: React.FC = () => {
           >
             <Clock className="w-4 h-4 text-[#C2410C]" />
             <span>Lhůty a věk</span>
-            <span className="font-mono text-xs opacity-75">[{NUMERIC_DRILL_ITEMS.length}]</span>
+            <span className="font-mono text-xs opacity-75">[{activeNumericItems.length}]</span>
           </button>
 
           <button
@@ -268,45 +318,69 @@ export const DrillMode: React.FC = () => {
                 : 'bg-[#FCFBF9] text-[#161615] shadow-[2px_2px_0px_#161615] hover:-translate-x-0.5 hover:-translate-y-0.5'
             }`}
           >
-            <Zap className="w-4 h-4 text-[#0F766E]" />
-            <span>Semafor</span>
-            <span className="font-mono text-xs opacity-75">[{SEMAPHORE_DRILL_ITEMS.length}]</span>
+            <Zap className="w-4 h-4 text-[#16A34A]" />
+            <span>Právní semafor</span>
+            <span className="font-mono text-xs opacity-75">[{activeSemaphoreItems.length}]</span>
           </button>
         </div>
 
-        {/* Study / Free Browse Mode Switch */}
-        <div className="flex items-center gap-2 self-start lg:self-center">
+        {/* Study Mode vs Test Mode Toggle */}
+        <div className="flex items-center gap-2 self-start lg:self-auto bg-[#E8E6DF] p-1 border-1.5 border-[#161615]">
+          <span className="text-xs font-mono text-[#575653] font-bold px-2 hidden sm:inline">
+            Režim:
+          </span>
           <button
             onClick={() => {
-              setIsStudyMode(prev => !prev);
+              setIsStudyMode(false);
               setShowAnswerInStudy(false);
             }}
-            className={`hard-button px-3 py-1.5 text-xs font-mono font-bold flex items-center gap-2 cursor-pointer transition-all ${
-              isStudyMode
-                ? 'bg-[#FEF3C7] text-[#92400E] border-[#B45309]'
-                : 'bg-[#FCFBF9] text-[#161615]'
+            className={`px-2.5 py-1 text-xs font-mono font-bold cursor-pointer transition-colors flex items-center gap-1.5 ${
+              !isStudyMode
+                ? 'bg-[#161615] text-[#FCFBF9]'
+                : 'text-[#161615] hover:bg-[#DCD8CF]'
             }`}
-            title="Přepnout mezi testováním (s bodováním) a volným procházením (jako u kartiček)"
           >
-            <BookMarked className="w-3.5 h-3.5 text-[#B45309]" />
-            <span>
-              Režim: {isStudyMode ? 'Volné procházení (bez zkoušení)' : 'Ostré zkoušení (s volbou)'}
-            </span>
+            <Zap className="w-3 h-3" />
+            <span>Ostrý test</span>
+          </button>
+          <button
+            onClick={() => {
+              setIsStudyMode(true);
+              setShowAnswerInStudy(false);
+            }}
+            className={`px-2.5 py-1 text-xs font-mono font-bold cursor-pointer transition-colors flex items-center gap-1.5 ${
+              isStudyMode
+                ? 'bg-[#1D4ED8] text-[#FFFFFF]'
+                : 'text-[#161615] hover:bg-[#DCD8CF]'
+            }`}
+            title="Procházení otázek bez povinnosti odpovídat (jako kartičky)"
+          >
+            <BookMarked className="w-3 h-3" />
+            <span>Volné studium</span>
           </button>
         </div>
       </div>
 
+      {/* Info notice about Study Mode if active */}
+      {isStudyMode && (
+        <div className="bg-[#EFF6FF] border-1.5 border-[#1D4ED8] p-3 text-xs flex items-center justify-between gap-3 text-[#1E40AF]">
+          <div className="flex items-center gap-2">
+            <BookMarked className="w-4 h-4 text-[#1D4ED8] shrink-0" />
+            <span>
+              <strong>Režim volného studia:</strong> Můžete libovolně listovat otázkami [← / →] bez nutnosti klikat na odpověď. Stiskem <strong>[Mezerníku]</strong> nebo tlačítkem níže odhalíte správné řešení a judikaturu.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ================================================================
-          SUBTAB A: MODELOVÝ TEST A–D (50 OTÁZEK Z PDF DOKUMENTU)
+          SUBTAB A: MODEL TEST A-D (50 QUESTIONS)
           ================================================================ */}
       {subTab === 'test' && (
         <div className="space-y-4">
-          {/* Group Filter Selector */}
-          <div className="hard-card-sm p-3 bg-[#FCFBF9] flex items-center gap-2 overflow-x-auto text-xs">
-            <span className="font-mono font-bold text-[#575653] whitespace-nowrap mr-1 flex items-center gap-1">
-              <Layers className="w-3.5 h-3.5" />
-              <span>Okruh:</span>
-            </span>
+          {/* Group Filter Bar */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 text-xs">
+            <span className="font-mono text-[#575653] font-bold text-[11px] mr-1 shrink-0">Skupina:</span>
             <button
               onClick={() => setTestGroupFilter('all')}
               className={`px-2.5 py-1 font-mono font-bold border transition-colors cursor-pointer whitespace-nowrap ${
@@ -315,58 +389,24 @@ export const DrillMode: React.FC = () => {
                   : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
               }`}
             >
-              Všech 50 otázek [{MODEL_TEST_ITEMS.length}]
+              Všech {activeTestItems.length} otázek
             </button>
-            <button
-              onClick={() => setTestGroupFilter(1)}
-              className={`px-2.5 py-1 font-mono font-bold border transition-colors cursor-pointer whitespace-nowrap ${
-                testGroupFilter === 1
-                  ? 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
-                  : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
-              }`}
-            >
-              1. Práva pacientů & ZZS (10)
-            </button>
-            <button
-              onClick={() => setTestGroupFilter(2)}
-              className={`px-2.5 py-1 font-mono font-bold border transition-colors cursor-pointer whitespace-nowrap ${
-                testGroupFilter === 2
-                  ? 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
-                  : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
-              }`}
-            >
-              2. Rodiče, nezletilí & DVP (10)
-            </button>
-            <button
-              onClick={() => setTestGroupFilter(3)}
-              className={`px-2.5 py-1 font-mono font-bold border transition-colors cursor-pointer whitespace-nowrap ${
-                testGroupFilter === 3
-                  ? 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
-                  : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
-              }`}
-            >
-              3. Omezovací prostředky & Detence (10)
-            </button>
-            <button
-              onClick={() => setTestGroupFilter(4)}
-              className={`px-2.5 py-1 font-mono font-bold border transition-colors cursor-pointer whitespace-nowrap ${
-                testGroupFilter === 4
-                  ? 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
-                  : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
-              }`}
-            >
-              4. Dokumentace & Mlčenlivost (10)
-            </button>
-            <button
-              onClick={() => setTestGroupFilter(5)}
-              className={`px-2.5 py-1 font-mono font-bold border transition-colors cursor-pointer whitespace-nowrap ${
-                testGroupFilter === 5
-                  ? 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
-                  : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
-              }`}
-            >
-              5. Trestní & Civilní úprava (10)
-            </button>
+            {testGroups.map(grp => {
+              const grpCount = activeTestItems.filter(i => i.groupId === grp.id).length;
+              return (
+                <button
+                  key={grp.id}
+                  onClick={() => setTestGroupFilter(grp.id)}
+                  className={`px-2.5 py-1 font-mono font-bold border transition-colors cursor-pointer whitespace-nowrap ${
+                    testGroupFilter === grp.id
+                      ? 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
+                      : 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615]'
+                  }`}
+                >
+                  {grp.id}. {grp.name} ({grpCount})
+                </button>
+              );
+            })}
           </div>
 
           {!testFinished && currentTestItem ? (
@@ -410,110 +450,102 @@ export const DrillMode: React.FC = () => {
                 </h3>
               </div>
 
-              {/* 4 Options (A, B, C, D) */}
-              <div className="space-y-2.5 pt-1">
-                <div className="text-[11px] font-mono uppercase font-bold text-[#575653] flex items-center justify-between">
-                  <span>
-                    {isStudyMode
-                      ? 'Možnosti odpovědi (kliknutím nebo tlačítkem níže odhalíte řešení):'
-                      : 'Zvolte možnost [A / B / C / D] (nebo přeskočte šipkou [→]):'}
-                  </span>
-                  {selectedTestOption && (
-                    <span className={selectedTestOption === currentTestItem.correctOption ? 'text-[#166534] font-bold' : 'text-[#991B1B] font-bold'}>
-                      {selectedTestOption === currentTestItem.correctOption ? '✓ Správně zvoleno' : `✕ Chybná volba (správně je ${currentTestItem.correctOption})`}
-                    </span>
-                  )}
-                </div>
+              {/* Multiple Choice Options (A, B, C, D) */}
+              <div className="grid grid-cols-1 gap-2.5">
+                {currentTestItem.options.map((option) => {
+                  const isSelected = selectedTestOption === option.letter;
+                  const isCorrect = option.letter === currentTestItem.correctOption;
+                  const revealed = isStudyMode && showAnswerInStudy;
 
-                <div className="grid grid-cols-1 gap-2.5">
-                  {currentTestItem.options.map((opt) => {
-                    const isSelected = selectedTestOption === opt.letter;
-                    const isCorrect = opt.letter === currentTestItem.correctOption;
-                    const isRevealed = selectedTestOption !== null || showAnswerInStudy;
+                  let cardStyle = 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615] hover:bg-[#F9F8F5]';
 
-                    let btnStyle = 'bg-[#FFF] border-[#161615]/30 hover:border-[#161615] hover:bg-[#F8F7F4] text-[#161615]';
-
-                    if (isRevealed) {
-                      if (isCorrect) {
-                        btnStyle = 'bg-[#DCFCE7] border-[#166534] text-[#14532D] font-semibold';
-                      } else if (isSelected && !isCorrect) {
-                        btnStyle = 'bg-[#FEE2E2] border-[#991B1B] text-[#7F1D1D] font-semibold';
-                      } else {
-                        btnStyle = 'bg-[#FCFBF9] border-[#161615]/15 text-[#575653] opacity-60';
-                      }
+                  if (selectedTestOption !== null) {
+                    if (isCorrect) {
+                      cardStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] shadow-[2px_2px_0px_#166534]';
+                    } else if (isSelected) {
+                      cardStyle = 'bg-[#FEE2E2] text-[#991B1B] border-[#991B1B] shadow-[2px_2px_0px_#991B1B]';
+                    } else {
+                      cardStyle = 'bg-[#FCFBF9] text-[#8C8A84] border-[#161615]/15 opacity-60';
                     }
+                  } else if (revealed) {
+                    if (isCorrect) {
+                      cardStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] shadow-[2px_2px_0px_#166534] font-semibold';
+                    } else {
+                      cardStyle = 'bg-[#FCFBF9] text-[#575653] border-[#161615]/20 opacity-70';
+                    }
+                  }
 
-                    return (
-                      <button
-                        key={opt.letter}
-                        onClick={() => {
-                          if (isStudyMode) {
-                            setShowAnswerInStudy(true);
-                          } else {
-                            handleTestSelect(opt.letter);
-                          }
-                        }}
-                        className={`text-left p-3.5 border-1.5 transition-all flex items-start gap-3 cursor-pointer ${btnStyle}`}
-                      >
-                        <span className={`font-mono font-bold text-xs px-2.5 py-0.5 border shrink-0 ${
-                          isRevealed && isCorrect
-                            ? 'bg-[#166534] text-[#FFF] border-[#166534]'
-                            : isRevealed && isSelected
-                            ? 'bg-[#991B1B] text-[#FFF] border-[#991B1B]'
-                            : 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
-                        }`}>
-                          {opt.letter}
-                        </span>
-                        <span className="text-sm flex-1 leading-snug pt-0.5">
-                          {opt.text}
-                        </span>
-                        {isRevealed && isCorrect && <CheckCircle2 className="w-5 h-5 text-[#166534] shrink-0" />}
-                        {isRevealed && isSelected && !isCorrect && <XCircle className="w-5 h-5 text-[#991B1B] shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
+                  return (
+                    <button
+                      key={option.letter}
+                      onClick={() => handleTestSelect(option.letter)}
+                      disabled={selectedTestOption !== null}
+                      className={`text-left p-3.5 sm:p-4 border-1.5 transition-all flex items-start gap-3.5 cursor-pointer disabled:cursor-default ${cardStyle}`}
+                    >
+                      <div className={`font-mono text-xs font-bold w-6 h-6 shrink-0 flex items-center justify-center border ${
+                        selectedTestOption !== null && isCorrect
+                          ? 'bg-[#166534] text-white border-[#166534]'
+                          : selectedTestOption !== null && isSelected
+                          ? 'bg-[#991B1B] text-white border-[#991B1B]'
+                          : revealed && isCorrect
+                          ? 'bg-[#166534] text-white border-[#166534]'
+                          : 'bg-[#161615] text-[#FCFBF9] border-[#161615]'
+                      }`}>
+                        {option.letter}
+                      </div>
+                      <div className="text-xs sm:text-sm font-medium leading-relaxed flex-1">
+                        {option.text}
+                      </div>
+                      {selectedTestOption !== null && isCorrect && (
+                        <CheckCircle2 className="w-5 h-5 text-[#166534] shrink-0" />
+                      )}
+                      {selectedTestOption !== null && isSelected && !isCorrect && (
+                        <XCircle className="w-5 h-5 text-[#991B1B] shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Reveal toggle in Study / Free browsing mode or when answered */}
-              {(selectedTestOption !== null || showAnswerInStudy) ? (
-                <div className="space-y-4 pt-4 border-t-1.5 border-[#161615] animate-in fade-in duration-150">
-                  <div className="bg-[#DCFCE7] border-1.5 border-[#166534] p-3 text-xs sm:text-sm font-bold text-[#14532D] flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-[#166534]" />
-                      <span>SPRÁVNÁ ODPOVĚĎ: {currentTestItem.correctOption}</span>
-                    </span>
-                    <span className="text-xs font-mono font-normal">
-                      {currentTestItem.options.find(o => o.letter === currentTestItem.correctOption)?.text}
-                    </span>
-                  </div>
-
-                  {/* Statutory legal basis box */}
-                  <div className="bg-[#EFECE6] border-1.5 border-[#161615] p-3.5 font-mono text-xs text-[#161615] leading-relaxed">
-                    <div className="font-bold uppercase tracking-wider text-[11px] text-[#575653] mb-1 flex items-center gap-1">
-                      <BookOpen className="w-3.5 h-3.5 text-[#161615]" />
-                      <span>§ Zákonná opora:</span>
+              {/* Legal Explanation & Caution Box (shown after answering OR in study mode if revealed) */}
+              {(selectedTestOption !== null || (isStudyMode && showAnswerInStudy)) && (
+                <div className="space-y-4 pt-4 border-t-1.5 border-[#161615] animate-in fade-in duration-200">
+                  {/* Correct Option Banner */}
+                  <div className="bg-[#DCFCE7] border-1.5 border-[#166534] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-[#166534] text-white font-mono font-bold text-xs px-2.5 py-1">
+                        Správná odpověď: {currentTestItem.correctOption}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-[#166534]">
+                        {selectedTestOption === currentTestItem.correctOption ? 'Výborně! Přesná odpověď.' : (selectedTestOption ? 'Chybná volba.' : 'Řešení')}
+                      </span>
                     </div>
-                    <div className="font-semibold text-[#161615]">
+                    <div className="text-xs font-mono text-[#166534] font-semibold">
                       {currentTestItem.legalBasis}
                     </div>
                   </div>
 
-                  {/* Chyták / Judikatura box */}
-                  <div className="bg-[#FFFBEB] border-1.5 border-[#D97706] p-3.5 text-xs sm:text-sm text-[#92400E] leading-relaxed">
-                    <div className="font-mono font-bold uppercase tracking-wider text-[11px] text-[#B45309] mb-1 flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-[#D97706]" />
-                      <span>Chyták / Judikatura a výklad v praxi:</span>
+                  {/* Clarification */}
+                  <div className="bg-[#FCFBF9] border-1.5 border-[#161615] p-4 text-xs sm:text-sm text-[#161615] leading-relaxed">
+                    <div className="font-mono text-[11px] font-bold text-[#575653] uppercase tracking-wider mb-1">
+                      Stručné právní vysvětlení:
                     </div>
-                    <p className="font-medium text-[#78350F]">
-                      {currentTestItem.cautionOrCaseLaw}
-                    </p>
+                    <p className="font-serif text-base">{currentTestItem.answer}</p>
+                  </div>
+
+                  {/* Practical Trap & Case Law Box */}
+                  <div className="bg-[#FFFBEB] border-1.5 border-[#B45309] p-4 text-xs sm:text-sm text-[#78350F] leading-relaxed">
+                    <div className="flex items-center gap-1.5 font-bold font-mono uppercase text-[11px] mb-1.5 text-[#B45309]">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>Praktický chyták & Judikatura:</span>
+                    </div>
+                    <p>{currentTestItem.cautionOrCaseLaw}</p>
                   </div>
                 </div>
-              ) : null}
+              )}
 
-              {/* Free Navigation Toolbar: Prev, Reveal Answer, Next/Skip without requiring answer */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#161615]/20">
+              {/* Navigation Toolbar */}
+              <div className="flex items-center justify-between pt-2">
                 <button
                   onClick={handlePrevTest}
                   disabled={testIndex === 0}
@@ -523,22 +555,25 @@ export const DrillMode: React.FC = () => {
                   <span>Předchozí [←]</span>
                 </button>
 
-                <button
-                  onClick={() => setShowAnswerInStudy(prev => !prev)}
-                  className="hard-button bg-[#FCFBF9] hover:bg-[#FEF3C7] text-[#161615] px-4 py-2 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
-                >
-                  {showAnswerInStudy || selectedTestOption !== null ? (
-                    <>
-                      <EyeOff className="w-3.5 h-3.5 text-[#8C8A84]" />
-                      <span>Skrýt řešení [Mezerník]</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-3.5 h-3.5 text-[#B45309]" />
-                      <span>Odhalit řešení [Mezerník]</span>
-                    </>
-                  )}
-                </button>
+                {/* In Study mode: toggle show solution button */}
+                {isStudyMode && (
+                  <button
+                    onClick={() => setShowAnswerInStudy(prev => !prev)}
+                    className="hard-button bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#92400E] px-3.5 py-2 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {showAnswerInStudy || selectedTestOption !== null ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5 text-[#8C8A84]" />
+                        <span>Skrýt řešení [Mezerník]</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5 text-[#B45309]" />
+                        <span>Odhalit řešení [Mezerník]</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <button
                   onClick={handleNextTest}
@@ -546,7 +581,7 @@ export const DrillMode: React.FC = () => {
                 >
                   <span>
                     {testIndex < filteredTestItems.length - 1
-                      ? selectedTestOption !== null || showAnswerInStudy
+                      ? isStudyMode || selectedTestOption !== null
                         ? 'Další otázka [→]'
                         : 'Přeskočit na další [→]'
                       : 'Vyhodnotit test'}
@@ -587,7 +622,7 @@ export const DrillMode: React.FC = () => {
                   className="hard-button bg-[#FCFBF9] text-[#161615] hover:bg-[#F5F3EE] px-5 py-2.5 text-xs sm:text-sm font-mono font-bold flex items-center gap-2 cursor-pointer"
                 >
                   <Layers className="w-4 h-4" />
-                  <span>Všech 50 otázek</span>
+                  <span>Všech {activeTestItems.length} otázek</span>
                 </button>
               </div>
             </div>
@@ -600,7 +635,7 @@ export const DrillMode: React.FC = () => {
           ================================================================ */}
       {subTab === 'numeric' && (
         <div className="space-y-4">
-          {!numFinished ? (
+          {!numFinished && currentNumItem ? (
             <div className="hard-card p-6 sm:p-8 space-y-6">
               {/* Header Info */}
               <div className="flex items-center justify-between border-b-1.5 border-[#161615] pb-3">
@@ -609,7 +644,7 @@ export const DrillMode: React.FC = () => {
                     Lhůty a věk
                   </span>
                   <span className="font-mono text-xs font-bold text-[#161615]">
-                    Otázka {numIndex + 1} z {NUMERIC_DRILL_ITEMS.length}
+                    Otázka {numIndex + 1} z {activeNumericItems.length}
                   </span>
                 </div>
                 {!isStudyMode && (
@@ -629,72 +664,63 @@ export const DrillMode: React.FC = () => {
                 </h3>
               </div>
 
-              {/* 4 Multiple Choice Options */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                {currentNumItem.options.map((option, i) => {
+              {/* Options */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {currentNumItem.options.map((option) => {
                   const isSelected = selectedNumOption === option;
                   const isCorrect = option === currentNumItem.correctAnswer;
-                  const isRevealed = selectedNumOption !== null || showAnswerInStudy;
+                  const revealed = isStudyMode && showAnswerInStudy;
 
-                  let btnStyle = 'bg-[#FCFBF9] text-[#161615] border-[#161615] hover:bg-[#F0EDE6]';
+                  let cardStyle = 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615] hover:bg-[#F9F8F5]';
 
-                  if (isRevealed) {
+                  if (selectedNumOption !== null) {
                     if (isCorrect) {
-                      btnStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] font-bold';
-                    } else if (isSelected && !isCorrect) {
-                      btnStyle = 'bg-[#FEE2E2] text-[#991B1B] border-[#991B1B] font-bold';
+                      cardStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] shadow-[2px_2px_0px_#166534]';
+                    } else if (isSelected) {
+                      cardStyle = 'bg-[#FEE2E2] text-[#991B1B] border-[#991B1B] shadow-[2px_2px_0px_#991B1B]';
                     } else {
-                      btnStyle = 'bg-[#F8F7F4] text-[#8C8A84] border-[#161615]/20 opacity-50';
+                      cardStyle = 'bg-[#FCFBF9] text-[#8C8A84] border-[#161615]/15 opacity-60';
+                    }
+                  } else if (revealed) {
+                    if (isCorrect) {
+                      cardStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] shadow-[2px_2px_0px_#166534] font-semibold';
                     }
                   }
 
                   return (
                     <button
-                      key={i}
-                      onClick={() => {
-                        if (isStudyMode) {
-                          setShowAnswerInStudy(true);
-                        } else {
-                          handleNumericSelect(option);
-                        }
-                      }}
-                      className={`hard-button p-4 text-left font-mono text-xs sm:text-sm transition-all flex items-center justify-between cursor-pointer ${btnStyle}`}
+                      key={option}
+                      onClick={() => handleNumericSelect(option)}
+                      disabled={selectedNumOption !== null}
+                      className={`text-left p-4 border-1.5 transition-all flex items-center justify-between cursor-pointer disabled:cursor-default font-mono text-sm sm:text-base font-bold ${cardStyle}`}
                     >
-                      <span className="font-bold">{option}</span>
-                      {isRevealed && isCorrect && <CheckCircle2 className="w-4 h-4 text-[#166534]" />}
-                      {isRevealed && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-[#991B1B]" />}
+                      <span>{option}</span>
+                      {selectedNumOption !== null && isCorrect && (
+                        <CheckCircle2 className="w-5 h-5 text-[#166534]" />
+                      )}
+                      {selectedNumOption !== null && isSelected && !isCorrect && (
+                        <XCircle className="w-5 h-5 text-[#991B1B]" />
+                      )}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Evaluation and Explanation Box */}
-              {(selectedNumOption !== null || showAnswerInStudy) && (
-                <div className="space-y-4 pt-4 border-t-1.5 border-[#161615] animate-in fade-in duration-150">
-                  <div
-                    className={`p-4 border-1.5 ${
-                      selectedNumOption === currentNumItem.correctAnswer || showAnswerInStudy
-                        ? 'bg-[#DCFCE7] border-[#166534] text-[#166534]'
-                        : 'bg-[#FEE2E2] border-[#991B1B] text-[#991B1B]'
-                    }`}
-                  >
-                    <div className="font-mono font-bold text-xs uppercase flex items-center gap-1.5 mb-1">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Správná hodnota: {currentNumItem.correctAnswer}</span>
-                    </div>
-                    <p className="text-sm text-[#161615] font-medium mt-1">
-                      {currentNumItem.explanation}
-                    </p>
-                    <div className="font-mono text-xs font-bold text-[#161615] mt-2 pt-2 border-t border-[#161615]/20 flex items-center gap-1">
-                      <BookOpen className="w-3.5 h-3.5 text-[#575653]" />
-                      <span>{currentNumItem.legalBasis}</span>
-                    </div>
+              {/* Explanation (shown after selection OR in study mode if revealed) */}
+              {(selectedNumOption !== null || (isStudyMode && showAnswerInStudy)) && (
+                <div className="bg-[#F0EDE6] border-1.5 border-[#161615] p-4 text-xs sm:text-sm space-y-2 animate-in fade-in duration-200">
+                  <div className="font-mono text-xs font-bold text-[#161615]">
+                    Správná odpověď: {currentNumItem.correctAnswer}
+                  </div>
+                  <p className="text-[#575653]">{currentNumItem.explanation}</p>
+                  <div className="font-mono text-[11px] text-[#8C8A84] pt-1 border-t border-[#161615]/10">
+                    Opora: {currentNumItem.legalBasis}
                   </div>
                 </div>
               )}
 
-              {/* Free Navigation Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#161615]/20">
+              {/* Navigation Toolbar */}
+              <div className="flex items-center justify-between pt-2">
                 <button
                   onClick={handlePrevNumeric}
                   disabled={numIndex === 0}
@@ -704,28 +730,31 @@ export const DrillMode: React.FC = () => {
                   <span>Předchozí [←]</span>
                 </button>
 
-                <button
-                  onClick={() => setShowAnswerInStudy(prev => !prev)}
-                  className="hard-button bg-[#FCFBF9] hover:bg-[#FEF3C7] text-[#161615] px-4 py-2 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
-                >
-                  {showAnswerInStudy || selectedNumOption !== null ? (
-                    <>
-                      <EyeOff className="w-3.5 h-3.5 text-[#8C8A84]" />
-                      <span>Skrýt řešení</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-3.5 h-3.5 text-[#B45309]" />
-                      <span>Odhalit řešení</span>
-                    </>
-                  )}
-                </button>
+                {/* In Study mode: toggle show solution button */}
+                {isStudyMode && (
+                  <button
+                    onClick={() => setShowAnswerInStudy(prev => !prev)}
+                    className="hard-button bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#92400E] px-3.5 py-2 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {showAnswerInStudy || selectedNumOption !== null ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5 text-[#8C8A84]" />
+                        <span>Skrýt řešení</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5 text-[#B45309]" />
+                        <span>Odhalit řešení</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <button
                   onClick={handleNextNumeric}
                   className="hard-button bg-[#161615] text-[#FCFBF9] hover:bg-[#2E2E2C] px-5 py-2.5 text-xs sm:text-sm font-mono font-bold flex items-center gap-2 cursor-pointer"
                 >
-                  <span>{numIndex < NUMERIC_DRILL_ITEMS.length - 1 ? 'Další [→]' : 'Vyhodnotit'}</span>
+                  <span>{numIndex < activeNumericItems.length - 1 ? 'Další [→]' : 'Vyhodnotit'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -739,10 +768,10 @@ export const DrillMode: React.FC = () => {
               <div>
                 <span className="font-mono text-xs uppercase font-bold text-[#575653]">Procvičování dokončeno</span>
                 <h3 className="font-serif text-3xl font-bold mt-1">
-                  Úspěšnost: {Math.round((numScore.correct / NUMERIC_DRILL_ITEMS.length) * 100)}%
+                  Úspěšnost: {activeNumericItems.length > 0 ? Math.round((numScore.correct / activeNumericItems.length) * 100) : 0}%
                 </h3>
                 <p className="text-sm text-[#575653] mt-2">
-                  Správně zodpovězeno {numScore.correct} z {NUMERIC_DRILL_ITEMS.length} zákonných lhůt a věkových hranic.
+                  Správně zodpovězeno {numScore.correct} z {activeNumericItems.length} zákonných lhůt a věkových hranic.
                 </p>
               </div>
 
@@ -765,7 +794,7 @@ export const DrillMode: React.FC = () => {
           ================================================================ */}
       {subTab === 'semaphore' && (
         <div className="space-y-4">
-          {!semFinished ? (
+          {!semFinished && currentSemItem ? (
             <div className="hard-card p-6 sm:p-8 space-y-6">
               {/* Header Info */}
               <div className="flex items-center justify-between border-b-1.5 border-[#161615] pb-3">
@@ -774,7 +803,7 @@ export const DrillMode: React.FC = () => {
                     Semafor
                   </span>
                   <span className="font-mono text-xs font-bold text-[#161615]">
-                    Situace {semIndex + 1} z {SEMAPHORE_DRILL_ITEMS.length}
+                    Situace {semIndex + 1} z {activeSemaphoreItems.length}
                   </span>
                 </div>
                 {!isStudyMode && (
@@ -799,72 +828,63 @@ export const DrillMode: React.FC = () => {
                 <div className="font-mono text-[11px] font-bold text-[#575653] uppercase tracking-wider mb-1">
                   Jaký je zákonný postup lékaře / poskytovatele?
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {currentSemItem.options.map((action, i) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {currentSemItem.options.map((action) => {
                     const isSelected = selectedSemAction === action;
                     const isCorrect = action === currentSemItem.correctAction;
-                    const isRevealed = selectedSemAction !== null || showAnswerInStudy;
+                    const revealed = isStudyMode && showAnswerInStudy;
 
-                    let btnStyle = 'bg-[#FCFBF9] text-[#161615] border-[#161615] hover:bg-[#F0EDE6]';
+                    let cardStyle = 'bg-[#FCFBF9] text-[#161615] border-[#161615]/30 hover:border-[#161615] hover:bg-[#F9F8F5]';
 
-                    if (isRevealed) {
+                    if (selectedSemAction !== null) {
                       if (isCorrect) {
-                        btnStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] font-bold';
-                      } else if (isSelected && !isCorrect) {
-                        btnStyle = 'bg-[#FEE2E2] text-[#991B1B] border-[#991B1B] font-bold';
+                        cardStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] shadow-[2px_2px_0px_#166534]';
+                      } else if (isSelected) {
+                        cardStyle = 'bg-[#FEE2E2] text-[#991B1B] border-[#991B1B] shadow-[2px_2px_0px_#991B1B]';
                       } else {
-                        btnStyle = 'bg-[#F8F7F4] text-[#8C8A84] border-[#161615]/20 opacity-50';
+                        cardStyle = 'bg-[#FCFBF9] text-[#8C8A84] border-[#161615]/15 opacity-60';
+                      }
+                    } else if (revealed) {
+                      if (isCorrect) {
+                        cardStyle = 'bg-[#DCFCE7] text-[#166534] border-[#166534] shadow-[2px_2px_0px_#166534] font-semibold';
                       }
                     }
 
                     return (
                       <button
-                        key={i}
-                        onClick={() => {
-                          if (isStudyMode) {
-                            setShowAnswerInStudy(true);
-                          } else {
-                            handleSemaphoreSelect(action);
-                          }
-                        }}
-                        className={`hard-button p-4 text-center font-mono text-xs sm:text-sm font-bold transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer ${btnStyle}`}
+                        key={action}
+                        onClick={() => handleSemaphoreSelect(action)}
+                        disabled={selectedSemAction !== null}
+                        className={`text-left p-4 border-1.5 transition-all flex items-center justify-between cursor-pointer disabled:cursor-default font-mono text-xs sm:text-sm font-bold ${cardStyle}`}
                       >
                         <span>{action}</span>
-                        {isRevealed && isCorrect && <CheckCircle2 className="w-4 h-4 text-[#166534]" />}
-                        {isRevealed && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-[#991B1B]" />}
+                        {selectedSemAction !== null && isCorrect && (
+                          <CheckCircle2 className="w-5 h-5 text-[#166534]" />
+                        )}
+                        {selectedSemAction !== null && isSelected && !isCorrect && (
+                          <XCircle className="w-5 h-5 text-[#991B1B]" />
+                        )}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Evaluation and Explanation Box */}
-              {(selectedSemAction !== null || showAnswerInStudy) && (
-                <div className="space-y-4 pt-4 border-t-1.5 border-[#161615] animate-in fade-in duration-150">
-                  <div
-                    className={`p-4 border-1.5 ${
-                      selectedSemAction === currentSemItem.correctAction || showAnswerInStudy
-                        ? 'bg-[#DCFCE7] border-[#166534] text-[#166534]'
-                        : 'bg-[#FEE2E2] border-[#991B1B] text-[#991B1B]'
-                    }`}
-                  >
-                    <div className="font-mono font-bold text-xs uppercase flex items-center gap-1.5 mb-1">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Správná reakce: {currentSemItem.correctAction}</span>
-                    </div>
-                    <p className="text-sm text-[#161615] font-medium mt-1">
-                      {currentSemItem.explanation}
-                    </p>
-                    <div className="font-mono text-xs font-bold text-[#161615] mt-2 pt-2 border-t border-[#161615]/20 flex items-center gap-1">
-                      <BookOpen className="w-3.5 h-3.5 text-[#575653]" />
-                      <span>{currentSemItem.legalBasis}</span>
-                    </div>
+              {/* Explanation (shown after selection OR in study mode if revealed) */}
+              {(selectedSemAction !== null || (isStudyMode && showAnswerInStudy)) && (
+                <div className="bg-[#F0EDE6] border-1.5 border-[#161615] p-4 text-xs sm:text-sm space-y-2 animate-in fade-in duration-200">
+                  <div className="font-mono text-xs font-bold text-[#161615]">
+                    Správné řešení: {currentSemItem.correctAction}
+                  </div>
+                  <p className="text-[#575653]">{currentSemItem.explanation}</p>
+                  <div className="font-mono text-[11px] text-[#8C8A84] pt-1 border-t border-[#161615]/10">
+                    Opora: {currentSemItem.legalBasis}
                   </div>
                 </div>
               )}
 
-              {/* Free Navigation Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#161615]/20">
+              {/* Navigation Toolbar */}
+              <div className="flex items-center justify-between pt-2">
                 <button
                   onClick={handlePrevSemaphore}
                   disabled={semIndex === 0}
@@ -874,28 +894,31 @@ export const DrillMode: React.FC = () => {
                   <span>Předchozí [←]</span>
                 </button>
 
-                <button
-                  onClick={() => setShowAnswerInStudy(prev => !prev)}
-                  className="hard-button bg-[#FCFBF9] hover:bg-[#FEF3C7] text-[#161615] px-4 py-2 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
-                >
-                  {showAnswerInStudy || selectedSemAction !== null ? (
-                    <>
-                      <EyeOff className="w-3.5 h-3.5 text-[#8C8A84]" />
-                      <span>Skrýt řešení</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-3.5 h-3.5 text-[#B45309]" />
-                      <span>Odhalit řešení</span>
-                    </>
-                  )}
-                </button>
+                {/* In Study mode: toggle show solution button */}
+                {isStudyMode && (
+                  <button
+                    onClick={() => setShowAnswerInStudy(prev => !prev)}
+                    className="hard-button bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#92400E] px-3.5 py-2 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {showAnswerInStudy || selectedSemAction !== null ? (
+                      <>
+                        <EyeOff className="w-3.5 h-3.5 text-[#8C8A84]" />
+                        <span>Skrýt řešení</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-3.5 h-3.5 text-[#B45309]" />
+                        <span>Odhalit řešení</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <button
                   onClick={handleNextSemaphore}
                   className="hard-button bg-[#161615] text-[#FCFBF9] hover:bg-[#2E2E2C] px-5 py-2.5 text-xs sm:text-sm font-mono font-bold flex items-center gap-2 cursor-pointer"
                 >
-                  <span>{semIndex < SEMAPHORE_DRILL_ITEMS.length - 1 ? 'Další [→]' : 'Vyhodnotit'}</span>
+                  <span>{semIndex < activeSemaphoreItems.length - 1 ? 'Další [→]' : 'Vyhodnotit'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -909,10 +932,10 @@ export const DrillMode: React.FC = () => {
               <div>
                 <span className="font-mono text-xs uppercase font-bold text-[#575653]">Semafor dokončen</span>
                 <h3 className="font-serif text-3xl font-bold mt-1">
-                  Úspěšnost: {Math.round((semScore.correct / SEMAPHORE_DRILL_ITEMS.length) * 100)}%
+                  Úspěšnost: {activeSemaphoreItems.length > 0 ? Math.round((semScore.correct / activeSemaphoreItems.length) * 100) : 0}%
                 </h3>
                 <p className="text-sm text-[#575653] mt-2">
-                  Správně vyřešeno {semScore.correct} ze {SEMAPHORE_DRILL_ITEMS.length} situací mlčenlivosti a souhlasů.
+                  Správně vyřešeno {semScore.correct} ze {activeSemaphoreItems.length} situací mlčenlivosti a souhlasů.
                 </p>
               </div>
 

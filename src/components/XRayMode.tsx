@@ -2,12 +2,19 @@ import React, { useState } from 'react';
 import { FileText, AlertTriangle, CheckCircle2, RotateCcw, HelpCircle, FileCheck, Info } from 'lucide-react';
 import { LEGAL_XRAY_DOCUMENTS, XRayDocument, XRaySentence } from '../data/legalData';
 
-export const XRayMode: React.FC = () => {
+interface XRayModeProps {
+  documents?: XRayDocument[];
+}
+
+export const XRayMode: React.FC<XRayModeProps> = ({ documents }) => {
+  const activeDocs = documents || LEGAL_XRAY_DOCUMENTS;
   const [selectedDocIndex, setSelectedDocIndex] = useState<number>(0);
   const [clickedSentences, setClickedSentences] = useState<Record<string, Record<string, boolean>>>({});
 
-  const currentDoc: XRayDocument = LEGAL_XRAY_DOCUMENTS[selectedDocIndex];
-  const docClicks = clickedSentences[currentDoc.id] || {};
+  // Reset or clamp index if documents change
+  const safeDocIndex = selectedDocIndex < activeDocs.length ? selectedDocIndex : 0;
+  const currentDoc: XRayDocument = activeDocs[safeDocIndex] || activeDocs[0];
+  const docClicks = clickedSentences[currentDoc?.id] || {};
 
   // Count discovered errors for current document
   const discoveredErrorsCount = currentDoc.sentences.filter(
@@ -38,7 +45,7 @@ export const XRayMode: React.FC = () => {
       {/* Top Document Selector Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-[#161615] pb-3">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {LEGAL_XRAY_DOCUMENTS.map((doc, idx) => {
+          {activeDocs.map((doc, idx) => {
             const clicks = clickedSentences[doc.id] || {};
             const found = doc.sentences.filter(s => s.isError && clicks[s.id]).length;
             const docDone = found === doc.totalErrors;

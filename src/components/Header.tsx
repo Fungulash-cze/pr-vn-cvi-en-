@@ -1,35 +1,75 @@
 import React from 'react';
-import { RotateCcw, Keyboard, CheckCircle2, AlertCircle } from 'lucide-react';
-import { CardStatus } from '../utils/storage';
+import { RotateCcw, Keyboard, CheckCircle2, AlertCircle, BookOpen, Scale } from 'lucide-react';
+import { CardStatus, LegalModuleId } from '../utils/storage';
 
 interface HeaderProps {
+  activeModule: LegalModuleId;
+  onModuleChange: (module: LegalModuleId) => void;
   activeTab: 'flashcards' | 'drill' | 'xray';
   onTabChange: (tab: 'flashcards' | 'drill' | 'xray') => void;
   cardStatus: Record<string, CardStatus>;
   totalCards: number;
+  drillCount: number;
+  docsCount: number;
   onOpenResetModal: () => void;
   onOpenShortcutsModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  activeModule,
+  onModuleChange,
   activeTab,
   onTabChange,
   cardStatus,
   totalCards,
+  drillCount,
+  docsCount,
   onOpenResetModal,
   onOpenShortcutsModal,
 }) => {
   const masteredCount = Object.values(cardStatus).filter(s => s === 'GOOD').length;
   const reviewCount = Object.values(cardStatus).filter(s => s === 'AGAIN' || s === 'HARD').length;
-  const percentMastered = Math.round((masteredCount / totalCards) * 100);
+  const percentMastered = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
 
   return (
     <header className="border-b-2 border-[#161615] pb-5 mb-6">
-      {/* Top Bar with Score */}
-      <div className="flex flex-wrap items-center justify-end gap-3 text-xs font-mono text-[#575653] mb-2">
-        <div className="flex items-center gap-2 text-xs">
+      {/* Top Bar with Module Switcher and Score */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono text-[#575653] mb-3">
+        {/* Module Switcher Segmented Control */}
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#8C8A84] hidden sm:inline">
+            Předmět:
+          </span>
+          <div className="inline-flex p-0.5 bg-[#E7E4DC] border-1.5 border-[#161615] shadow-[2px_2px_0px_#161615]">
+            <button
+              onClick={() => onModuleChange('zdravotnicke')}
+              className={`px-3 py-1 text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                activeModule === 'zdravotnicke'
+                  ? 'bg-[#161615] text-[#FCFBF9]'
+                  : 'text-[#161615] hover:bg-[#DCD8D0]'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Zdravotnické právo</span>
+            </button>
+            <button
+              onClick={() => onModuleChange('obcanske')}
+              className={`px-3 py-1 text-xs font-mono font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                activeModule === 'obcanske'
+                  ? 'bg-[#161615] text-[#FCFBF9]'
+                  : 'text-[#161615] hover:bg-[#DCD8D0]'
+              }`}
+            >
+              <Scale className="w-3.5 h-3.5" />
+              <span>Občanské právo hmotné</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Success Rate */}
+        <div className="flex items-center gap-2 text-xs justify-end">
           <span className="font-mono text-[#161615] font-semibold">
-            Úspěšnost: <span className="font-bold">{percentMastered}%</span>
+            Úspěšnost modulu: <span className="font-bold">{percentMastered}%</span>
           </span>
           <span className="text-[#8C8A84]">({masteredCount}/{totalCards})</span>
         </div>
@@ -39,8 +79,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#161615] leading-none">
-            Zdravotnické právo
+            {activeModule === 'zdravotnicke' ? 'Zdravotnické právo' : 'Občanské právo hmotné'}
           </h1>
+          <p className="text-xs sm:text-sm font-mono text-[#575653] mt-2">
+            {activeModule === 'zdravotnicke'
+              ? 'ZZS č. 372/2011 Sb. · OZ · Úmluva o biomedicíně · Trestní odpovědnost'
+              : 'Zákon č. 89/2012 Sb. (OZ) · Osoby · Věcná práva · Rodina · Dědictví · Závazky'}
+          </p>
         </div>
 
         {/* Global Action Buttons */}
@@ -101,7 +146,7 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'bg-[#333] text-[#FFF] border-[#555]'
               : 'bg-[#F0EDE6] text-[#161615] border-[#161615]'
           }`}>
-            Lhůty, Semafor & Test (66)
+            {drillCount} úkolů
           </span>
         </button>
 
@@ -120,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'bg-[#333] text-[#FFF] border-[#555]'
               : 'bg-[#F0EDE6] text-[#161615] border-[#161615]'
           }`}>
-            3 dokumenty
+            {docsCount} dokumenty
           </span>
         </button>
 

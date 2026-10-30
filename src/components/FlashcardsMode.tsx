@@ -17,17 +17,40 @@ import {
 import { FLASHCARDS, CATEGORIES, Flashcard } from '../data/legalData';
 import { CardStatus } from '../utils/storage';
 
+export interface CategoryItem {
+  id: number;
+  name?: string;
+  title?: string;
+  count?: number;
+  set?: string;
+}
+
 interface FlashcardsModeProps {
+  cards?: Flashcard[];
+  categories?: CategoryItem[];
   cardStatus: Record<string, CardStatus>;
   onRateCard: (cardId: string, status: CardStatus) => void;
   onClearCardStatus: (cardId: string) => void;
 }
 
 export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
+  cards,
+  categories,
   cardStatus,
   onRateCard,
   onClearCardStatus,
 }) => {
+  const activeCards = cards || FLASHCARDS;
+  const activeCategories = categories || CATEGORIES;
+
+  const setsInCards = useMemo(() => {
+    const s = new Set<string>();
+    activeCards.forEach(c => {
+      if (c.set) s.add(c.set);
+    });
+    return Array.from(s);
+  }, [activeCards]);
+
   const [selectedSet, setSelectedSet] = useState<'all' | 'zaklady' | 'modelove_otazky'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'need_review' | 'mastered' | 'unseen'>('all');
@@ -38,9 +61,21 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
   const [showGridDrawer, setShowGridDrawer] = useState<boolean>(false);
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
 
+  // Reset controls when activeCards change (e.g. module switched)
+  useEffect(() => {
+    setCurrentIndex(0);
+    setSelectedSet('all');
+    setSelectedCategory('all');
+    setStatusFilter('all');
+    setSearchQuery('');
+    setIsFlipped(false);
+    setShowClue(false);
+    setSelectedChoice(null);
+  }, [activeCards]);
+
   // Filter cards
   const filteredCards = useMemo(() => {
-    return FLASHCARDS.filter(card => {
+    return activeCards.filter(card => {
       // Set filter
       if (selectedSet !== 'all') {
         const cardSet = card.set || 'zaklady';
@@ -211,22 +246,24 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
       {/* Filter and Search Bar */}
       <div className="hard-card-sm p-4 space-y-3">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Set Selector */}
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold text-[#575653] whitespace-nowrap">Sada:</span>
-            <select
-              value={selectedSet}
-              onChange={(e) => {
-                setSelectedSet(e.target.value as any);
-                setSelectedCategory('all');
-              }}
-              className="bg-[#FCFBF9] border-1.5 border-[#161615] px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#161615] focus:outline-none"
-            >
-              <option value="all">Všechny sady ({FLASHCARDS.length})</option>
-              <option value="zaklady">Základní právní okruhy ({FLASHCARDS.filter(c => !c.set || c.set === 'zaklady').length})</option>
-              <option value="modelove_otazky">Modelové testové otázky A–D ({FLASHCARDS.filter(c => c.set === 'modelove_otazky').length})</option>
-            </select>
-          </div>
+          {/* Set Selector (only show if more than 1 set exists) */}
+          {setsInCards.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs font-bold text-[#575653] whitespace-nowrap">Sada:</span>
+              <select
+                value={selectedSet}
+                onChange={(e) => {
+                  setSelectedSet(e.target.value as any);
+                  setSelectedCategory('all');
+                }}
+                className="bg-[#FCFBF9] border-1.5 border-[#161615] px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#161615] focus:outline-none"
+              >
+                <option value="all">Všechny sady ({activeCards.length})</option>
+                <option value="zaklady">Základní právní okruhy ({activeCards.filter(c => !c.set || c.set === 'zaklady').length})</option>
+                <option value="modelove_otazky">Modelové testové otázky A–D ({activeCards.filter(c => c.set === 'modelove_otazky').length})</option>
+              </select>
+            </div>
+          )}
 
           {/* Category Dropdown */}
           <div className="flex items-center gap-2 flex-1">
@@ -236,10 +273,10 @@ export const FlashcardsMode: React.FC<FlashcardsModeProps> = ({
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="bg-[#FCFBF9] border-1.5 border-[#161615] px-3 py-1.5 text-xs sm:text-sm font-semibold text-[#161615] focus:outline-none w-full"
             >
-              <option value="all">Všechny okruhy v sadě</option>
-              {CATEGORIES.filter(cat => selectedSet === 'all' || cat.set === selectedSet).map(cat => {
-                const count = FLASHCARDS.filter(c => c.categoryId === cat.id).length;
-                const done = FLASHCARDS.filter(c => c.categoryId === cat.id && cardStatus[c.id] === 'GOOD').length;
+              <option value="all">Všechny okruhy ({activeCards.length})</option>
+              {activeCategories.filter(cat => selectedSet === 'all' || !cat.set || cat.set === selectedSet).map(cat => {
+                const count = activeCards.filter(c => c.categoryId === cat.id).length;
+                const done = activeCards.filter(c => c.categoryId === cat.id && cardStatus[c.id] === 'GOOD').length;
                 return (
                   <option key={cat.id} value={cat.id}>
                     {cat.title} ({done}/{count} hotovo)
